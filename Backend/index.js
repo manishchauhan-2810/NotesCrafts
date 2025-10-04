@@ -4,6 +4,7 @@ import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import teacherRoutes from "./routes/teacherRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
+import classroomRoutes from "./routes/classroomRoutes.js";
 
 
 const app = express();
@@ -17,6 +18,8 @@ app.use(express.json());
 
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/student", studentRoutes);
+
+app.use("/api/classroom", classroomRoutes)
 
 const port = 5000;
 
