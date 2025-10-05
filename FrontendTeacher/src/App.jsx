@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -33,3 +34,33 @@ function App() {
 }
 
 export default App
+=======
+import React, { useState } from 'react';
+import Dashboard from './Pages/Dashboard';
+import ClassDetail from './Pages/ClassDetail';
+
+function App() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [selectedClass, setSelectedClass] = useState(null);
+
+  return (
+    <div>
+      {currentPage === 'dashboard' ? (
+        <Dashboard 
+          onClassClick={(classData) => {
+            setSelectedClass(classData);
+            setCurrentPage('class');
+          }}
+        />
+      ) : (
+        <ClassDetail 
+          classData={selectedClass}
+          onBack={() => setCurrentPage('dashboard')}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
+>>>>>>> f93394e62ae362567e4e0007f38ca62c7e5dfc78
