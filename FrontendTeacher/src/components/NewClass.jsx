@@ -151,13 +151,13 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors"
+              className="flex-1 px-6 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors cursor-pointer"
             >
               Create Class
             </button>
