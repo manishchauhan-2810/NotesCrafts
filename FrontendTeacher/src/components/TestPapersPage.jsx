@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Pencil, Trash2, CheckCircle, Eye, X, FileText, Plus, Minus } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom'; // ✅ import
 
 const TestPapersPage = () => {
   const [drafts, setDrafts] = useState([
@@ -37,6 +38,10 @@ const TestPapersPage = () => {
     { id: 5, title: 'Plant Biology', date: '2024-09-15' }
   ]);
   const [selectedNotes, setSelectedNotes] = useState([]);
+
+  // ✅ React Router navigate
+  const navigate = useNavigate();
+  const { classId } = useParams(); // get classId from route
 
   const handleGenerateWithAI = async () => {
     if (selectedNotes.length === 0) return;
@@ -124,7 +129,6 @@ const TestPapersPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Test Papers</h2>
@@ -216,7 +220,11 @@ const TestPapersPage = () => {
                     >
                       <Trash2 className="w-4 h-4" /> Delete
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    {/* ✅ Navigate to TestResultsViewer */}
+                    <button
+                      onClick={() => navigate(`/classdetails/${classId}/testpapers/viewresults/${test.id}`)}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
                       <Eye className="w-4 h-4" /> View Results
                     </button>
                   </div>
@@ -363,9 +371,8 @@ const TestPapersPage = () => {
                       <textarea
                         value={q.question}
                         onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600 resize-none"
-                        rows="3"
-                      />
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
+                      ></textarea>
                     </div>
 
                     <div>
@@ -374,34 +381,31 @@ const TestPapersPage = () => {
                         type="number"
                         value={q.marks}
                         onChange={(e) => updateQuestion(qIndex, 'marks', parseInt(e.target.value) || 0)}
-                        min="1"
-                        max="20"
-                        className="w-24 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
+                        className="w-32 px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
                       />
                     </div>
                   </div>
                 ))}
-              </div>
 
-              <button
-                onClick={addQuestion}
-                className="mt-6 flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-600 font-semibold rounded-lg hover:bg-purple-200 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Add Question
-              </button>
+                <button
+                  onClick={addQuestion}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add Question
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex gap-3">
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
               <button
                 onClick={() => { setShowEditModal(false); setEditingTest(null); }}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateTest}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
               >
                 Save Changes
               </button>

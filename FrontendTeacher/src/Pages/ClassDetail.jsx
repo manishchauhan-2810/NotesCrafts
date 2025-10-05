@@ -66,14 +66,6 @@ const ClassDetail = ({ classData, onBack, currentUser }) => {
           </div>
         )}
 
-        {/* Test Papers Tab */}
-        {activeTab === "test-papers" && (
-          <div className="bg-white rounded-xl border p-12 text-center">
-            <h3 className="text-xl font-bold mb-2">No Test Papers Yet</h3>
-            <p className="text-gray-600">Upload test papers</p>
-          </div>
-        )}
-
         {/* Doubts Tab */}
         {activeTab === "doubts" && (
           <div className="bg-white rounded-xl border overflow-hidden shadow-lg" style={{ height: 'calc(100vh - 280px)' }}>
