@@ -1,46 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BookOpen, User, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import API from "../api"; // Axios instance pointing to backend
 
-export default function NoteCraftsDashboard() {
+export default function NoteCraftsDashboard({ userId, role }) {
   const navigate = useNavigate();
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [classId, setClassId] = useState("");
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [myCourses, setMyCourses] = useState([]);
 
-  const myCourses = [
-    {
-      id: 1,
-      title: "Web Development Fundamentals",
-      teacher: "Ms. Anjali Gupta",
-      color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-      courseId: "web-dev-fundamentals"
-    },
-    {
-      id: 2,
-      title: "Python for Beginners",
-      teacher: "Mr. Rahul Verma",
-      color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      courseId: "python-beginners"
-    },
-    {
-      id: 3,
-      title: "Database Management",
-      teacher: "Prof. Amit Kumar",
-      color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      courseId: "database-management"
-    },
-  ];
+  // Fetch classrooms from backend
+  useEffect(() => {
+    const fetchClassrooms = async () => {
+      try {
+        const res = await API.get("/classroom", { params: { userId, role } });
+        const classrooms = res.data.classrooms.map((c) => ({
+          id: c._id,
+          title: c.name,
+          teacher: role === "student" ? c.teacherId.name : "You",
+          color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+          courseId: c._id,
+        }));
+        setMyCourses(classrooms);
+      } catch (err) {
+        console.error("Error fetching classrooms:", err);
+      }
+    };
+    fetchClassrooms();
+  }, [userId, role]);
 
-  const handleJoinClass = (e) => {
+  // Join a classroom
+  const handleJoinClass = async (e) => {
     e.preventDefault();
-    if (classId.trim()) {
-      alert(`Joining class with ID: ${classId}`);
+    if (!classId.trim()) return;
+
+    try {
+      const res = await API.post("/classroom/join", {
+        studentId: userId,
+        classCode: classId.trim(),
+      });
+      alert(res.data.message);
+
+      // Refresh courses after joining
+      const updated = await API.get("/classroom", { params: { userId, role } });
+      setMyCourses(updated.data.classrooms.map((c) => ({
+        id: c._id,
+        title: c.name,
+        teacher: role === "student" ? c.teacherId.name : "You",
+        color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+        courseId: c._id,
+      })));
+
       setClassId("");
       setShowJoinModal(false);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to join class");
     }
   };
 
+  // Navigate to notes page
   const handleCourseClick = (courseId) => {
     navigate(`/course/${courseId}/notes`);
   };
@@ -124,7 +144,7 @@ export default function NoteCraftsDashboard() {
           </button>
         </div>
 
-        {/* My Courses Section */}
+        {/* Courses Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {myCourses.map((course) => (
             <CourseCard key={course.id} course={course} />
