@@ -48,13 +48,6 @@ const ClassDetail = ({ classData, onBack }) => {
           </>
         )}
 
-        {activeTab === 'quizzes' && (
-          <div className="bg-white rounded-xl border p-12 text-center">
-            <h3 className="text-xl font-bold mb-2">No Quizzes Yet</h3>
-            <p className="text-gray-600">Create your first quiz</p>
-          </div>
-        )}
-
         {activeTab === 'test-papers' && (
           <div className="bg-white rounded-xl border p-12 text-center">
             <h3 className="text-xl font-bold mb-2">No Test Papers Yet</h3>
