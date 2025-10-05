@@ -1,42 +1,44 @@
-// src/components/NewClass.jsx
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from "react";
+import { X } from "lucide-react";
 
 const NewClass = ({ isOpen, onClose, onCreate }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    subject: '',
-    studentCount: '',
-    color: 'bg-gradient-to-br from-purple-500 to-purple-700'
+    name: "",
+    subject: "",
+    color: "bg-gradient-to-br from-purple-500 to-purple-700",
   });
 
   const colors = [
-    { name: 'Purple', value: 'bg-gradient-to-br from-purple-500 to-purple-700' },
-    { name: 'Blue', value: 'bg-gradient-to-br from-blue-500 to-blue-700' },
-    { name: 'Green', value: 'bg-gradient-to-br from-green-500 to-green-700' },
-    { name: 'Orange', value: 'bg-gradient-to-br from-orange-500 to-orange-700' },
-    { name: 'Red', value: 'bg-gradient-to-br from-red-500 to-red-700' },
-    { name: 'Pink', value: 'bg-gradient-to-br from-pink-500 to-pink-700' },
-    { name: 'Indigo', value: 'bg-gradient-to-br from-indigo-500 to-indigo-700' },
-    { name: 'Teal', value: 'bg-gradient-to-br from-teal-500 to-teal-700' }
+    { name: "Purple", value: "bg-gradient-to-br from-purple-500 to-purple-700" },
+    { name: "Blue", value: "bg-gradient-to-br from-blue-500 to-blue-700" },
+    { name: "Green", value: "bg-gradient-to-br from-green-500 to-green-700" },
+    { name: "Orange", value: "bg-gradient-to-br from-orange-500 to-orange-700" },
+    { name: "Red", value: "bg-gradient-to-br from-red-500 to-red-700" },
+    { name: "Pink", value: "bg-gradient-to-br from-pink-500 to-pink-700" },
+    { name: "Indigo", value: "bg-gradient-to-br from-indigo-500 to-indigo-700" },
+    { name: "Teal", value: "bg-gradient-to-br from-teal-500 to-teal-700" },
   ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.subject || !formData.studentCount) return;
 
+    if (!formData.name) {
+      alert("Please enter class name");
+      return;
+    }
+
+    // ✅ Pass name (used by backend) and UI extras
     onCreate({
       name: formData.name,
       subject: formData.subject,
-      studentCount: parseInt(formData.studentCount, 10),
-      color: formData.color
+      color: formData.color,
     });
 
+    // Reset form and close modal
     setFormData({
-      name: '',
-      subject: '',
-      studentCount: '',
-      color: 'bg-gradient-to-br from-purple-500 to-purple-700'
+      name: "",
+      subject: "",
+      color: "bg-gradient-to-br from-purple-500 to-purple-700",
     });
     onClose();
   };
@@ -57,8 +59,8 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-6">
+          {/* Left Column */}
           <div className="space-y-5">
-            {/* Left Column - Form Fields */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class Name
@@ -66,8 +68,10 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Biology - Class 10A"
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="e.g., Math 101"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 required
               />
@@ -75,30 +79,16 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Subject
+                Subject (optional)
               </label>
               <input
                 type="text"
                 value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="e.g., Biology"
+                onChange={(e) =>
+                  setFormData({ ...formData, subject: e.target.value })
+                }
+                placeholder="e.g., Mathematics"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Students
-              </label>
-              <input
-                type="number"
-                value={formData.studentCount}
-                onChange={(e) => setFormData({ ...formData, studentCount: e.target.value })}
-                placeholder="e.g., 30"
-                min="1"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-                required
               />
             </div>
 
@@ -111,11 +101,13 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
                   <button
                     key={color.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, color: color.value })}
+                    onClick={() =>
+                      setFormData({ ...formData, color: color.value })
+                    }
                     className={`h-14 rounded-xl ${color.value} transition-transform ${
                       formData.color === color.value
-                        ? 'ring-2 ring-purple-300 scale-105'
-                        : 'hover:scale-105'
+                        ? "ring-2 ring-purple-300 scale-105"
+                        : "hover:scale-105"
                     }`}
                     title={color.name}
                   />
@@ -124,29 +116,29 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
             </div>
           </div>
 
+          {/* Right Column - Preview */}
           <div className="space-y-4">
-            {/* Right Column - Preview */}
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Preview
             </label>
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-              <div className={`${formData.color} h-36 flex items-center justify-center p-4 rounded-t-2xl`}>
+              <div
+                className={`${formData.color} h-36 flex items-center justify-center p-4 rounded-t-2xl`}
+              >
                 <h3 className="text-xl font-bold text-white text-center">
-                  {formData.name || 'Class Name'}
+                  {formData.name || "Class Name"}
                 </h3>
               </div>
               <div className="p-5">
                 <p className="text-gray-700 font-semibold mb-2">
-                  {formData.subject || 'Subject'}
+                  {formData.subject || "Subject"}
                 </p>
-                <p className="text-gray-500 text-sm">
-                  {formData.studentCount || '0'} students
-                </p>
+                <p className="text-gray-500 text-sm">0 students</p>
               </div>
             </div>
           </div>
 
-          {/* Bottom Buttons - Full Width */}
+          {/* Bottom Buttons */}
           <div className="col-span-2 flex gap-4 pt-4">
             <button
               type="button"

@@ -7,7 +7,7 @@ const ClassTabs = ({ activeTab, onTabChange }) => {
     { id: 'stream', label: 'Stream' },
     { id: 'quizzes', label: 'Quizzes' },
     { id: 'test-papers', label: 'Test papers' },
-    { id: 'doubts', label: 'Doubts', badge: 1 }
+    { id: 'doubts', label: 'Doubts', badge: 1 },
   ];
 
   const renderContent = () => {
@@ -24,11 +24,15 @@ const ClassTabs = ({ activeTab, onTabChange }) => {
 
   return (
     <div>
+      {/* Tabs */}
       <div className="flex gap-6 mb-8 border-b border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => onTabChange(tab.id)}
+            onClick={() => {
+              console.log('Tab clicked:', tab.id);
+              onTabChange(tab.id);
+            }}
             className={`pb-3 px-1 font-semibold transition-colors flex items-center gap-2 ${
               activeTab === tab.id
                 ? 'text-purple-600 border-b-2 border-purple-600'
@@ -45,9 +49,8 @@ const ClassTabs = ({ activeTab, onTabChange }) => {
         ))}
       </div>
 
-      <div className="mt-6">
-        {renderContent()}
-      </div>
+      {/* Tab Content */}
+      <div className="mt-6">{renderContent()}</div>
     </div>
   );
 };
