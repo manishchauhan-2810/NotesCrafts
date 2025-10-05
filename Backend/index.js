@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import teacherRoutes from "./routes/teacherRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import classroomRoutes from "./routes/classroomRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
 
 
 const app = express();
@@ -19,7 +20,10 @@ app.use(express.json());
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/student", studentRoutes);
 
-app.use("/api/classroom", classroomRoutes)
+app.use("/api/classroom", classroomRoutes);
+
+
+app.use("/api/announcement", announcementRoutes);
 
 const port = 5000;
 
