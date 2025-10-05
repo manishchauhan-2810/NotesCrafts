@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
-import Document from "../models/notesModel.js";
+import Document from "../models/Note.js";
 import { AI_Service } from "../services/aiService.js";
 
 dotenv.config();

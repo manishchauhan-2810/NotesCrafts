@@ -6,7 +6,9 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import classroomRoutes from "./routes/classroomRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
-import notesRoutes from "./routes/notesRoutes.js";
+import noteRoutes from "./routes/noteRoutes.js";
+import quizRoutes from "./routes/quizRoutes.js";
+import questionBankRoutes from "./routes/questionBankRoutes.js";
 
 
 const app = express();
@@ -22,8 +24,10 @@ app.use("/api/teacher", teacherRoutes);
 app.use("/api/student", studentRoutes);
 
 app.use("/api/classroom", classroomRoutes);
-app.use("/api/notes", notesRoutes);
+app.use("/api/notes", noteRoutes);
 app.use("/api/announcement", announcementRoutes);
+app.use("/api/quiz", quizRoutes);
+app.use("/api/question-bank", questionBankRoutes);
 
 const port = 5000;
 
