@@ -7,20 +7,17 @@ export default function StudentNavbar() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = () => {
-    // Add your logout logic here
     console.log('Logging out...');
     navigate('/login');
     setIsDropdownOpen(false);
@@ -30,7 +27,6 @@ export default function StudentNavbar() {
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Left Side - Logo and Brand */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-purple-700 rounded-lg flex items-center justify-center">
               <svg
@@ -47,10 +43,9 @@ export default function StudentNavbar() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900">NoteCrafts.ai</span>
+            <span className="text-xl font-bold text-gray-900">ADHYAYAN.AI</span>
           </Link>
 
-          {/* Center - Search Bar */}
           <div className="flex-1 max-w-2xl mx-8">
             <div className="relative">
               <input
@@ -74,7 +69,6 @@ export default function StudentNavbar() {
             </div>
           </div>
 
-          {/* Right Side - User Profile with Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -83,33 +77,27 @@ export default function StudentNavbar() {
               <span className="text-sm">JD</span>
             </button>
 
-            {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                {/* User Info */}
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-semibold text-gray-900">John Doe</p>
                   <p className="text-xs text-gray-500">john.doe@example.com</p>
                 </div>
 
-                {/* Menu Items */}
                 <div className="py-2">
                   <Link
                     to="/profile"
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                   >
-                    <User className="w-4 h-4 mr-3" />
-                    My Profile
+                    <User className="w-4 h-4 mr-3" /> My Profile
                   </Link>
-
                   <Link
                     to="/settings"
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                   >
-                    <Settings className="w-4 h-4 mr-3" />
-                    Settings
+                    <Settings className="w-4 h-4 mr-3" /> Settings
                   </Link>
                 </div>
 
@@ -119,17 +107,14 @@ export default function StudentNavbar() {
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                   >
-                    <LogIn className="w-4 h-4 mr-3" />
-                    Login
+                    <LogIn className="w-4 h-4 mr-3" /> Login
                   </Link>
-
                   <Link
                     to="/signup"
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                   >
-                    <UserPlus className="w-4 h-4 mr-3" />
-                    Sign Up
+                    <UserPlus className="w-4 h-4 mr-3" /> Sign Up
                   </Link>
                 </div>
 
@@ -138,8 +123,7 @@ export default function StudentNavbar() {
                     onClick={handleLogout}
                     className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                   >
-                    <LogOut className="w-4 h-4 mr-3" />
-                    Logout
+                    <LogOut className="w-4 h-4 mr-3" /> Logout
                   </button>
                 </div>
               </div>

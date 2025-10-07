@@ -1,35 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Pencil, Trash2, CheckCircle, Eye, X, FileText, Plus, Minus } from 'lucide-react';
+import API from '../services/Api'; // make sure this points to your API file
 
 const QuizzesPage = () => {
   const [activeTab, setActiveTab] = useState('quizzes');
-  const [drafts, setDrafts] = useState([
-    { 
-      id: 1, 
-      title: 'Cell Structure Basics', 
-      status: 'draft',
-      questions: [
-        { id: 1, question: 'What is the powerhouse of the cell?', options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Chloroplast'], correctAnswer: 1 },
-        { id: 2, question: 'Which organelle is responsible for protein synthesis?', options: ['Golgi Body', 'Ribosome', 'Lysosome', 'Vacuole'], correctAnswer: 1 }
-      ]
-    }
-  ]);
-  const [published, setPublished] = useState([
-    { 
-      id: 2, 
-      title: 'Photosynthesis Quiz', 
-      status: 'published', 
-      submissions: 24,
-      questions: [
-        { id: 1, question: 'What gas is released during photosynthesis?', options: ['Carbon dioxide', 'Oxygen', 'Nitrogen', 'Hydrogen'], correctAnswer: 1 }
-      ]
-    }
-  ]);
+  const [drafts, setDrafts] = useState([]);
+  const [published, setPublished] = useState([]);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   const [availableNotes] = useState([
     { id: 1, title: 'Photosynthesis Notes', date: '2024-10-01' },
     { id: 2, title: 'Cell Structure', date: '2024-09-28' },
@@ -39,82 +20,111 @@ const QuizzesPage = () => {
   ]);
   const [selectedNotes, setSelectedNotes] = useState([]);
 
+  // Fetch all quizzes on load
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        const res = await API.getAllQuizzes();
+        setDrafts(res.data.filter(q => q.status === "draft"));
+        setPublished(res.data.filter(q => q.status === "published"));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchQuizzes();
+  }, []);
+
+  // Generate quiz from selected notes
   const handleGenerateWithAI = async () => {
     if (selectedNotes.length === 0) return;
     setIsGenerating(true);
 
-    const selectedNoteTitles = selectedNotes.map(id => 
-      availableNotes.find(n => n.id === id)?.title
-    );
-    
-    const generatedQuestions = [
-      { id: 1, question: `What is the main concept in ${selectedNoteTitles[0]}?`, options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 0 },
-      { id: 2, question: `Explain the key process described in ${selectedNoteTitles[0]}?`, options: ['Process 1', 'Process 2', 'Process 3', 'Process 4'], correctAnswer: 1 },
-      { id: 3, question: `What are the important components mentioned in the notes?`, options: ['Components A', 'Components B', 'Components C', 'Components D'], correctAnswer: 2 }
-    ];
-
-    if (selectedNotes.length > 1) {
-      generatedQuestions.push({
-        id: 4,
-        question: `How does ${selectedNoteTitles[0]} relate to ${selectedNoteTitles[1]}?`,
-        options: ['Relation A', 'Relation B', 'Relation C', 'Relation D'],
-        correctAnswer: 0
-      });
+    try {
+      for (const noteId of selectedNotes) {
+        const res = await API.generateQuiz(noteId);
+        setDrafts(prev => [...prev, res.data.quiz]);
+      }
+      setSelectedNotes([]);
+      setShowAIModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error generating quiz from note.");
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const newQuiz = {
-      id: Date.now(),
-      title: `Quiz from ${selectedNoteTitles.join(', ')}`,
-      status: 'draft',
-      questions: generatedQuestions,
-      generatedFrom: selectedNotes.length
-    };
-    
-    setDrafts([...drafts, newQuiz]);
-    setSelectedNotes([]);
-    setShowAIModal(false);
     setIsGenerating(false);
   };
 
-  const handleEdit = (quiz) => setEditingQuiz({...quiz});
-  const handleUpdateQuiz = () => {
+  const handleEdit = (quiz) => setEditingQuiz({ ...quiz });
+  
+  const handleUpdateQuiz = async () => {
     if (!editingQuiz) return;
-    if (editingQuiz.status === 'draft') {
-      setDrafts(drafts.map(q => q.id === editingQuiz.id ? editingQuiz : q));
-    } else {
-      setPublished(published.map(q => q.id === editingQuiz.id ? editingQuiz : q));
+
+    try {
+      const updatedQuiz = {
+        title: editingQuiz.title,
+        questions: editingQuiz.questions,
+        status: editingQuiz.status
+      };
+      
+      await API.updateQuiz(editingQuiz._id, updatedQuiz);
+
+      if (editingQuiz.status === "draft") {
+        setDrafts(drafts.map(q => q._id === editingQuiz._id ? editingQuiz : q));
+      } else {
+        setPublished(published.map(q => q._id === editingQuiz._id ? editingQuiz : q));
+      }
+
+      setEditingQuiz(null);
+      setShowEditModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update quiz.");
     }
-    setEditingQuiz(null);
-    setShowEditModal(false);
   };
-  const handleDelete = (id, status) => {
-    if (status === 'draft') setDrafts(drafts.filter(q => q.id !== id));
-    else setPublished(published.filter(q => q.id !== id));
-  };
-  const handlePublish = (id) => {
-    const quiz = drafts.find(q => q.id === id);
-    if (quiz) {
-      setPublished([...published, { ...quiz, status: 'published', submissions: 0 }]);
-      setDrafts(drafts.filter(q => q.id !== id));
+
+  const handleDelete = async (id, status) => {
+    try {
+      await API.deleteQuiz(id);
+      if (status === "draft") setDrafts(drafts.filter(q => q._id !== id));
+      else setPublished(published.filter(q => q._id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete quiz.");
     }
   };
+
+  const handlePublish = async (id) => {
+    const quiz = drafts.find(q => q._id === id);
+    if (!quiz) return;
+
+    try {
+      const updatedQuiz = { ...quiz, status: "published" };
+      await API.updateQuiz(id, updatedQuiz);
+
+      setPublished([...published, updatedQuiz]);
+      setDrafts(drafts.filter(q => q._id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to publish quiz.");
+    }
+  };
+
   const toggleNoteSelection = (noteId) => {
     setSelectedNotes(prev => prev.includes(noteId) ? prev.filter(id => id !== noteId) : [...prev, noteId]);
   };
-  const updateQuizTitle = (value) => setEditingQuiz({...editingQuiz, title: value});
+
+  const updateQuizTitle = (value) => setEditingQuiz({ ...editingQuiz, title: value });
   const updateQuestion = (qIndex, field, value) => {
     const updatedQuestions = [...editingQuiz.questions];
-    updatedQuestions[qIndex] = {...updatedQuestions[qIndex], [field]: value};
-    setEditingQuiz({...editingQuiz, questions: updatedQuestions});
+    updatedQuestions[qIndex] = { ...updatedQuestions[qIndex], [field]: value };
+    setEditingQuiz({ ...editingQuiz, questions: updatedQuestions });
   };
   const updateOption = (qIndex, optIndex, value) => {
     const updatedQuestions = [...editingQuiz.questions];
     const updatedOptions = [...updatedQuestions[qIndex].options];
     updatedOptions[optIndex] = value;
-    updatedQuestions[qIndex] = {...updatedQuestions[qIndex], options: updatedOptions};
-    setEditingQuiz({...editingQuiz, questions: updatedQuestions});
+    updatedQuestions[qIndex] = { ...updatedQuestions[qIndex], options: updatedOptions };
+    setEditingQuiz({ ...editingQuiz, questions: updatedQuestions });
   };
   const addQuestion = () => {
     const newQuestion = { id: Date.now(), question: '', options: ['', '', '', ''], correctAnswer: 0 };
@@ -122,12 +132,11 @@ const QuizzesPage = () => {
   };
   const removeQuestion = (qIndex) => {
     const updatedQuestions = editingQuiz.questions.filter((_, i) => i !== qIndex);
-    setEditingQuiz({...editingQuiz, questions: updatedQuestions});
+    setEditingQuiz({ ...editingQuiz, questions: updatedQuestions });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Quizzes</h2>
@@ -140,7 +149,7 @@ const QuizzesPage = () => {
           </button>
         </div>
 
-        {/* Drafts Section */}
+        {/* Drafts */}
         <div className="mb-12">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Drafts</h3>
           <div className="space-y-4">
@@ -151,7 +160,7 @@ const QuizzesPage = () => {
             ) : (
               drafts.map(quiz => (
                 <div
-                  key={quiz.id}
+                  key={quiz._id}
                   className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-4">
@@ -167,13 +176,13 @@ const QuizzesPage = () => {
                       <Pencil className="w-4 h-4" /> Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(quiz.id, 'draft')}
+                      onClick={() => handleDelete(quiz._id, 'draft')}
                       className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" /> Delete
                     </button>
                     <button
-                      onClick={() => handlePublish(quiz.id)}
+                      onClick={() => handlePublish(quiz._id)}
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
                       <CheckCircle className="w-4 h-4" /> Publish
@@ -185,7 +194,7 @@ const QuizzesPage = () => {
           </div>
         </div>
 
-        {/* Published Section */}
+        {/* Published */}
         <div>
           <h3 className="text-xl font-bold text-gray-900 mb-4">Published</h3>
           <div className="space-y-4">
@@ -196,7 +205,7 @@ const QuizzesPage = () => {
             ) : (
               published.map(quiz => (
                 <div
-                  key={quiz.id}
+                  key={quiz._id}
                   className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-4">
@@ -212,7 +221,7 @@ const QuizzesPage = () => {
                       <Pencil className="w-4 h-4" /> Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(quiz.id, 'published')}
+                      onClick={() => handleDelete(quiz._id, 'published')}
                       className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" /> Delete
@@ -228,7 +237,7 @@ const QuizzesPage = () => {
         </div>
       </main>
 
-      {/* AI Generation Modal */}
+      {/* AI Modal */}
       {showAIModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -242,7 +251,6 @@ const QuizzesPage = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
             <div className="p-6 flex-1 overflow-y-auto">
               <h4 className="font-semibold text-gray-900 mb-4">Select Source Notes</h4>
               <div className="space-y-3">
@@ -275,7 +283,6 @@ const QuizzesPage = () => {
                 ))}
               </div>
             </div>
-
             <div className="p-6 border-t border-gray-200 flex gap-3">
               <button
                 onClick={() => { setShowAIModal(false); setSelectedNotes([]); }}
@@ -316,7 +323,6 @@ const QuizzesPage = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
             <div className="p-6 flex-1 overflow-y-auto">
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-900 mb-2">Quiz Title</label>
@@ -327,7 +333,6 @@ const QuizzesPage = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
-
               <div className="space-y-6">
                 {editingQuiz.questions.map((q, qIndex) => (
                   <div key={q.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
@@ -342,7 +347,6 @@ const QuizzesPage = () => {
                         </button>
                       )}
                     </div>
-
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Question</label>
                       <textarea
@@ -352,7 +356,6 @@ const QuizzesPage = () => {
                         rows="2"
                       />
                     </div>
-
                     <div className="space-y-3">
                       <label className="block text-sm font-medium text-gray-700">Options</label>
                       {q.options.map((option, optIndex) => (
@@ -380,16 +383,13 @@ const QuizzesPage = () => {
                   </div>
                 ))}
               </div>
-
               <button
                 onClick={addQuestion}
                 className="mt-6 flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-600 font-semibold rounded-lg hover:bg-purple-200 transition-colors"
               >
-                <Plus className="w-5 h-5" />
-                Add Question
+                <Plus className="w-5 h-5" /> Add Question
               </button>
             </div>
-
             <div className="p-6 border-t border-gray-200 flex gap-3">
               <button
                 onClick={() => { setShowEditModal(false); setEditingQuiz(null); }}

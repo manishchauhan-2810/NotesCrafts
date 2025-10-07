@@ -1,79 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { BookOpen, User, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import API from "../api"; // Axios instance pointing to backend
 
-export default function NoteCraftsDashboard({ userId, role }) {
+export default function NoteCraftsDashboard() {
   const navigate = useNavigate();
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [classId, setClassId] = useState("");
-  const [hoveredCard, setHoveredCard] = useState(null);
-  const [myCourses, setMyCourses] = useState([]);
 
-  // Fetch classrooms from backend
-  useEffect(() => {
-    const fetchClassrooms = async () => {
-      try {
-        const res = await API.get("/classroom", { params: { userId, role } });
-        const classrooms = res.data.classrooms.map((c) => ({
-          id: c._id,
-          title: c.name,
-          teacher: role === "student" ? c.teacherId.name : "You",
-          color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-          courseId: c._id,
-        }));
-        setMyCourses(classrooms);
-      } catch (err) {
-        console.error("Error fetching classrooms:", err);
-      }
-    };
-    fetchClassrooms();
-  }, [userId, role]);
+  // Since it's static, we won't fetch courses dynamically
+  const myCourses = [
+    {
+      id: 1,
+      title: "Java",
+      teacher: "Deepak Singh",
+      color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+      courseId: 101,
+    },
+  ];
 
-  // Join a classroom
-  const handleJoinClass = async (e) => {
-    e.preventDefault();
-    if (!classId.trim()) return;
-
-    try {
-      const res = await API.post("/classroom/join", {
-        studentId: userId,
-        classCode: classId.trim(),
-      });
-      alert(res.data.message);
-
-      // Refresh courses after joining
-      const updated = await API.get("/classroom", { params: { userId, role } });
-      setMyCourses(updated.data.classrooms.map((c) => ({
-        id: c._id,
-        title: c.name,
-        teacher: role === "student" ? c.teacherId.name : "You",
-        color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-        courseId: c._id,
-      })));
-
-      setClassId("");
-      setShowJoinModal(false);
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || "Failed to join class");
-    }
-  };
-
-  // Navigate to notes page
-  const handleCourseClick = (courseId) => {
-    navigate(`/course/${courseId}/notes`);
+  // Directly navigate to CourseDetailPage
+  const handleJoinClass = () => {
+    setShowJoinModal(false);
+    navigate("/course/101"); // static route
   };
 
   const CourseCard = ({ course }) => (
     <div
-      onClick={() => handleCourseClick(course.courseId)}
+      onClick={() => navigate(`/course/${course.courseId}`)}
       className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
-      style={{
-        transform: hoveredCard === course.id ? "translateY(-6px)" : "translateY(0)",
-      }}
-      onMouseEnter={() => setHoveredCard(course.id)}
-      onMouseLeave={() => setHoveredCard(null)}
     >
       <div
         className="h-40 flex items-center justify-center relative"
@@ -94,19 +47,12 @@ export default function NoteCraftsDashboard({ userId, role }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleCourseClick(course.courseId);
+            navigate(`/course/${course.courseId}`);
           }}
           className="w-full py-3 rounded-lg text-white font-semibold transition-all cursor-pointer"
           style={{
             background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-            boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)",
           }}
-          onMouseEnter={(e) =>
-            (e.target.style.background = "linear-gradient(135deg, #5B21B6 0%, #7E22CE 100%)")
-          }
-          onMouseLeave={(e) =>
-            (e.target.style.background = "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)")
-          }
         >
           Continue Learning
         </button>
@@ -128,16 +74,7 @@ export default function NoteCraftsDashboard({ userId, role }) {
             className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all cursor-pointer"
             style={{
               background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-              boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)",
             }}
-            onMouseEnter={(e) =>
-              (e.target.style.background =
-                "linear-gradient(135deg, #5B21B6 0%, #7E22CE 100%)")
-            }
-            onMouseLeave={(e) =>
-              (e.target.style.background =
-                "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)")
-            }
           >
             <BookOpen size={20} />
             Join Class
@@ -174,17 +111,9 @@ export default function NoteCraftsDashboard({ userId, role }) {
                 Join a Class
               </h3>
               <p className="text-gray-600">
-                Enter the class ID provided by your instructor
+                Click join to enter the sample course
               </p>
             </div>
-
-            <input
-              type="text"
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-              placeholder="e.g., CS101-2024"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6 transition-all"
-            />
 
             <div className="flex gap-3">
               <button
