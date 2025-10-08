@@ -58,14 +58,6 @@ const ClassDetail = ({ classData, onBack, currentUser }) => {
           </div>
         )}
 
-        {/* Quizzes Tab */}
-        {activeTab === "quizzes" && (
-          <div className="bg-white rounded-xl border p-12 text-center">
-            <h3 className="text-xl font-bold mb-2">No Quizzes Yet</h3>
-            <p className="text-gray-600">Create your first quiz</p>
-          </div>
-        )}
-
         {/* Doubts Tab */}
         {activeTab === "doubts" && (
           <div className="bg-white rounded-xl border overflow-hidden shadow-lg" style={{ height: 'calc(100vh - 280px)' }}>

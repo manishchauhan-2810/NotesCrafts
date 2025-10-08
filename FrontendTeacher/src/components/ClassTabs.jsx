@@ -1,10 +1,11 @@
 import React from 'react';
 import QuizzesPage from './QuizzesPage';
 import TestPapersPage from './TestPapersPage';
+import NotesPage from '../Pages/NotesPage'; // Add this import
 
 const ClassTabs = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: 'stream', label: 'Stream' },
+    { id: 'notes', label: 'Notes' },
     { id: 'quizzes', label: 'Quizzes' },
     { id: 'test-papers', label: 'Test papers' },
     { id: 'doubts', label: 'Doubts', badge: 1 },
@@ -12,6 +13,8 @@ const ClassTabs = ({ activeTab, onTabChange }) => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'notes':
+        return <NotesPage />; // Add this case
       case 'quizzes':
         return <QuizzesPage />;
       case 'test-papers':
@@ -33,7 +36,7 @@ const ClassTabs = ({ activeTab, onTabChange }) => {
               console.log('Tab clicked:', tab.id);
               onTabChange(tab.id);
             }}
-            className={`pb-3 px-1 font-semibold transition-colors flex items-center gap-2 ${
+            className={`pb-3 px-1 font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
               activeTab === tab.id
                 ? 'text-purple-600 border-b-2 border-purple-600'
                 : 'text-gray-600 hover:text-gray-900'

@@ -1,7 +1,12 @@
 import React from 'react';
-import { Bell, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 const Header = ({ onLogoClick }) => {
+  const handleLogout = () => {
+    // Add your logout logic here
+    console.log('Logging out...');
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -17,20 +22,18 @@ const Header = ({ onLogoClick }) => {
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">NoteCrafts.ai</h1>
+            <h1 className="text-xl font-bold text-gray-900">ADHYAYAN.AI</h1>
             <p className="text-sm text-gray-500">Teacher Panel</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button className="relative p-2 hover:bg-gray-100 rounded-lg">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg">
-            <User className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg transition-colors cursor-pointer"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="font-medium">Logout</span>
+        </button>
       </div>
     </header>
   );

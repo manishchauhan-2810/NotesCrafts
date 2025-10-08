@@ -6,7 +6,7 @@ const ClassHeader = ({ classData, onBack }) => {
     <div>
       <button 
         onClick={onBack}
-        className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-6 font-medium"
+        className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-6 font-medium cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Dashboard

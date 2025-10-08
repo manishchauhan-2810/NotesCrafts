@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
 import Document from "../models/Note.js";
-import { AI_Service } from "../services/aiService.js";
+
 
 dotenv.config();
 
@@ -90,42 +90,5 @@ export const logoutTeacher = async (req, res) => {
   } catch (err) {
     console.error("Logout Error:", err);
     res.status(500).json({ error: "Server error during logout" });
-  }
-};
-
-export const generateAssignment = async (req, res) => {
-  try {
-    const { user_id, source_text } = req.body;
-
-    if (!user_id || !source_text) {
-      return res.status(400).json({ error: "Teacher ID and source text are required" });
-    }
-
-    const teacher = await User.findById(user_id);
-    if (!teacher || teacher.role !== "teacher") {
-      return res.status(404).json({ error: "Teacher not found" });
-    }
-
-    // Save document
-    const doc = await Document.create({
-      teacherId: user_id,
-      sourceText: source_text,
-    });
-
-    // Generate assignment
-    const assignment =
-      typeof AI_Service.generateContent === "function"
-        ? await AI_Service.generateContent(source_text)
-        : null;
-
-    res.status(200).json({
-      message: "Assignment generated successfully",
-      teacher_id: user_id,
-      assignment,
-      document_id: doc._id,
-    });
-  } catch (err) {
-    console.error("Generate Assignment Error:", err);
-    res.status(500).json({ error: "Server error during assignment generation" });
   }
 };

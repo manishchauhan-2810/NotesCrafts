@@ -51,12 +51,26 @@ const TestPapersPage = () => {
       availableNotes.find(n => n.id === id)?.title
     );
     
-    const generatedQuestions = [
-      { id: 1, question: `Explain in detail the main concept discussed in ${selectedNoteTitles[0]}.`, type: 'long', marks: 10 },
-      { id: 2, question: `What are the key components mentioned in ${selectedNoteTitles[0]}?`, type: 'short', marks: 3 },
-      { id: 3, question: `Describe the process or mechanism explained in the notes about ${selectedNoteTitles[0]}.`, type: 'long', marks: 8 },
-      { id: 4, question: `Define the important terms related to ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 }
-    ];
+   const generatedQuestions = [
+  // Long answer questions (5)
+  { id: 1, question: `Explain in detail the main concept discussed in ${selectedNoteTitles[0]}.`, type: 'long', marks: 10 },
+  { id: 2, question: `Describe the process or mechanism explained in the notes about ${selectedNoteTitles[0]}.`, type: 'long', marks: 8 },
+  { id: 3, question: `Discuss how ${selectedNoteTitles[0]} contributes to the overall topic or subject it belongs to.`, type: 'long', marks: 8 },
+  { id: 4, question: `Illustrate the advantages and disadvantages related to ${selectedNoteTitles[0]}.`, type: 'long', marks: 10 },
+  { id: 5, question: `Write a detailed explanation with examples to show how ${selectedNoteTitles[0]} works in real-world scenarios.`, type: 'long', marks: 10 },
+
+  // Short answer questions (10)
+  { id: 6, question: `What are the key components mentioned in ${selectedNoteTitles[0]}?`, type: 'short', marks: 3 },
+  { id: 7, question: `Define the important terms related to ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
+  { id: 8, question: `State any two features or properties of ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
+  { id: 9, question: `What is the significance of ${selectedNoteTitles[0]} in the topic?`, type: 'short', marks: 3 },
+  { id: 10, question: `Name one real-life application of ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
+  { id: 11, question: `List the steps involved in ${selectedNoteTitles[0]}.`, type: 'short', marks: 3 },
+  { id: 12, question: `Write a short note on ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
+  { id: 13, question: `What problem does ${selectedNoteTitles[0]} solve?`, type: 'short', marks: 2 },
+  { id: 14, question: `Mention the main idea behind ${selectedNoteTitles[0]}.`, type: 'short', marks: 3 },
+  { id: 15, question: `Give an example related to ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 }
+];
 
     if (selectedNotes.length > 1) {
       generatedQuestions.push({
