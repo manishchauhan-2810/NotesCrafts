@@ -8,27 +8,35 @@ export default function NoteCraftsDashboard() {
   const [classId, setClassId] = useState("");
   const [hoveredCard, setHoveredCard] = useState(null);
 
+  // Combined the better parts of both versions
   const myCourses = [
     {
       id: 1,
       title: "Web Development Fundamentals",
       teacher: "Ms. Anjali Gupta",
       color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-      courseId: "web-dev-fundamentals"
+      courseId: "web-dev-fundamentals",
     },
     {
       id: 2,
       title: "Python for Beginners",
       teacher: "Mr. Rahul Verma",
       color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      courseId: "python-beginners"
+      courseId: "python-beginners",
     },
     {
       id: 3,
       title: "Database Management",
       teacher: "Prof. Amit Kumar",
       color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      courseId: "database-management"
+      courseId: "database-management",
+    },
+    {
+      id: 4,
+      title: "Java",
+      teacher: "Deepak Singh",
+      color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+      courseId: 101,
     },
   ];
 
@@ -38,22 +46,17 @@ export default function NoteCraftsDashboard() {
       alert(`Joining class with ID: ${classId}`);
       setClassId("");
       setShowJoinModal(false);
+    } else {
+      // Default navigate for static demo
+      setShowJoinModal(false);
+      navigate("/course/101");
     }
-  };
-
-  const handleCourseClick = (courseId) => {
-    navigate(`/course/${courseId}/notes`);
   };
 
   const CourseCard = ({ course }) => (
     <div
-      onClick={() => handleCourseClick(course.courseId)}
+      onClick={() => navigate(`/course/${course.courseId}`)}
       className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
-      style={{
-        transform: hoveredCard === course.id ? "translateY(-6px)" : "translateY(0)",
-      }}
-      onMouseEnter={() => setHoveredCard(course.id)}
-      onMouseLeave={() => setHoveredCard(null)}
     >
       <div
         className="h-40 flex items-center justify-center relative"
@@ -74,19 +77,12 @@ export default function NoteCraftsDashboard() {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleCourseClick(course.courseId);
+            navigate(`/course/${course.courseId}`);
           }}
           className="w-full py-3 rounded-lg text-white font-semibold transition-all cursor-pointer"
           style={{
             background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-            boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)",
           }}
-          onMouseEnter={(e) =>
-            (e.target.style.background = "linear-gradient(135deg, #5B21B6 0%, #7E22CE 100%)")
-          }
-          onMouseLeave={(e) =>
-            (e.target.style.background = "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)")
-          }
         >
           Continue Learning
         </button>
@@ -108,16 +104,7 @@ export default function NoteCraftsDashboard() {
             className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all cursor-pointer"
             style={{
               background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-              boxShadow: "0 4px 12px rgba(109, 40, 217, 0.3)",
             }}
-            onMouseEnter={(e) =>
-              (e.target.style.background =
-                "linear-gradient(135deg, #5B21B6 0%, #7E22CE 100%)")
-            }
-            onMouseLeave={(e) =>
-              (e.target.style.background =
-                "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)")
-            }
           >
             <BookOpen size={20} />
             Join Class
@@ -154,35 +141,38 @@ export default function NoteCraftsDashboard() {
                 Join a Class
               </h3>
               <p className="text-gray-600">
-                Enter the class ID provided by your instructor
+                Enter a Class ID or click join to enter the sample course.
               </p>
             </div>
 
-            <input
-              type="text"
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-              placeholder="e.g., CS101-2024"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6 transition-all"
-            />
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowJoinModal(false)}
-                className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleJoinClass}
-                className="flex-1 py-3 rounded-lg text-white font-medium transition-all"
-                style={{
-                  background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-                }}
-              >
-                Join Class
-              </button>
-            </div>
+            <form onSubmit={handleJoinClass} className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+                placeholder="Enter Class ID"
+                className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowJoinModal(false)}
+                  className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-lg text-white font-medium transition-all"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+                  }}
+                >
+                  Join Class
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
