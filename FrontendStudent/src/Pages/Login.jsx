@@ -14,8 +14,10 @@ export default function Login() {
     role: "student",
   });
 
-  const TEACHER_URL = import.meta.env.VITE_TEACHER_URL || "http://localhost:5174";
-  const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || "http://localhost:5173";
+  const TEACHER_URL =
+    import.meta.env.VITE_TEACHER_URL || "http://localhost:5174";
+  const STUDENT_URL =
+    import.meta.env.VITE_STUDENT_URL || "http://localhost:5173";
 
   const handleRoleClick = (role) => {
     const target = role === "student" ? STUDENT_URL : TEACHER_URL;
@@ -40,23 +42,40 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    try {
-      // const res = await axios.post('/auth/login', formData);
-      const user = { email: formData.email, role: formData.role };
-      localStorage.setItem("user", JSON.stringify(user));
 
-      const target =
-        formData.role === "teacher" ? TEACHER_URL : STUDENT_URL;
+    try {
+      // Call actual backend API based on role
+      const endpoint =
+        formData.role === "teacher"
+          ? "http://localhost:5000/api/teacher/login"
+          : "http://localhost:5000/api/student/login";
+
+      const response = await axios.post(endpoint, {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Store token and user data from backend response
+      const userData = {
+        ...(response.data.student || response.data.teacher),
+        role: formData.role,
+      };
+
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Check if need to redirect to different frontend
+      const target = formData.role === "teacher" ? TEACHER_URL : STUDENT_URL;
       const targetOrigin = new URL(target).origin;
+
       if (window.location.origin !== targetOrigin) {
-        localStorage.removeItem("user");
         window.location.replace(target);
         return;
       }
 
       navigate("/");
-    } catch {
-      setError("Login failed");
+    } catch (err) {
+      setError(err.response?.data?.error || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -65,25 +84,37 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
-        
         {/* Left Side - Branding */}
         <div className="hidden md:block">
           <div className="text-center space-y-6">
             <div className="flex items-center justify-center space-x-3 mb-8">
               <div className="w-16 h-16 bg-purple-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-10 h-10 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900">NoteCrafts.ai</h1>
+              <h1 className="text-4xl font-bold text-gray-900">
+                NoteCrafts.ai
+              </h1>
             </div>
-            
+
             <div className="space-y-4">
               <h2 className="text-3xl font-bold text-gray-800">
                 Welcome Back! 👋
               </h2>
               <p className="text-lg text-gray-600">
-                Continue your learning journey with AI-powered note-taking and course management
+                Continue your learning journey with AI-powered note-taking and
+                course management
               </p>
             </div>
 
@@ -95,7 +126,9 @@ export default function Login() {
                   </div>
                   <div className="text-left">
                     <p className="font-semibold">Smart Notes</p>
-                    <p className="text-sm text-purple-100">AI-powered organization</p>
+                    <p className="text-sm text-purple-100">
+                      AI-powered organization
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -104,7 +137,9 @@ export default function Login() {
                   </div>
                   <div className="text-left">
                     <p className="font-semibold">Track Progress</p>
-                    <p className="text-sm text-purple-100">Monitor your learning</p>
+                    <p className="text-sm text-purple-100">
+                      Monitor your learning
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -113,7 +148,9 @@ export default function Login() {
                   </div>
                   <div className="text-left">
                     <p className="font-semibold">Collaborate</p>
-                    <p className="text-sm text-purple-100">Connect with classmates</p>
+                    <p className="text-sm text-purple-100">
+                      Connect with classmates
+                    </p>
                   </div>
                 </div>
               </div>
@@ -127,17 +164,31 @@ export default function Login() {
             <div className="md:hidden text-center mb-6">
               <div className="flex items-center justify-center space-x-2 mb-4">
                 <div className="w-10 h-10 bg-purple-700 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                 </div>
-                <span className="text-2xl font-bold text-gray-900">NoteCrafts.ai</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  NoteCrafts.ai
+                </span>
               </div>
             </div>
 
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-              <p className="text-gray-600">Enter your credentials to access your account</p>
+              <p className="text-gray-600">
+                Enter your credentials to access your account
+              </p>
             </div>
 
             {error && (
@@ -156,7 +207,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => handleRoleClick("student")}
-                    className={`p-3 border-2 rounded-xl transition-all ${
+                    className={`p-3 border-2 rounded-xl transition-all cursor-pointer ${
                       formData.role === "student"
                         ? "border-purple-600 bg-purple-50 text-purple-600"
                         : "border-gray-300 hover:border-gray-400 text-gray-600"
@@ -167,7 +218,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => handleRoleClick("teacher")}
-                    className={`p-3 border-2 rounded-xl transition-all ${
+                    className={`p-3 border-2 rounded-xl transition-all cursor-pointer ${
                       formData.role === "teacher"
                         ? "border-purple-600 bg-purple-50 text-purple-600"
                         : "border-gray-300 hover:border-gray-400 text-gray-600"
@@ -218,7 +269,11 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -228,11 +283,16 @@ export default function Login() {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
                   />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <span className="ml-2 text-sm text-gray-600">
+                    Remember me
+                  </span>
                 </label>
-                <Link to="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -241,7 +301,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
@@ -249,8 +309,11 @@ export default function Login() {
 
             {/* Sign Up Link */}
             <p className="text-center text-gray-600 mt-6">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-purple-600 hover:text-purple-700 font-semibold">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-purple-600 hover:text-purple-700 font-semibold"
+              >
                 Sign Up
               </Link>
             </p>
@@ -258,5 +321,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

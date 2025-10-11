@@ -17,8 +17,8 @@ export default function ProtectedRoute({ children, requiredRole }) {
   // If no user -> redirect to /login
   if (!user) return <Navigate to="/login" replace />;
 
-  // If wrong role -> redirect to correct frontend
-  if (requiredRole && user.role !== requiredRole) {
+  // ⭐ ONLY check role if requiredRole is provided AND user has a role
+  if (requiredRole && user.role && user.role !== requiredRole) {
     const target =
       user.role === "teacher"
         ? import.meta.env.VITE_TEACHER_URL || "http://localhost:5174"
@@ -43,5 +43,6 @@ export default function ProtectedRoute({ children, requiredRole }) {
     return <Navigate to="/login" replace />;
   }
 
+  // If user.role is missing, allow access on this app (prevents incorrect cross-redirect)
   return children;
 }

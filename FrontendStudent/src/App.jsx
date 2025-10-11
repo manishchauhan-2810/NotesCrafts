@@ -1,6 +1,6 @@
 // FrontendStudent/src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import StudentNavbar from "./components/StudentNavbar";
 import NoteCraftsDashboard from "./Pages/NoteCraftsDashboard";
@@ -10,6 +10,16 @@ import Signup from "./Pages/Signup";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+
+// Layout component that includes navbar + page content
+function StudentLayout() {
+  return (
+    <>
+      <StudentNavbar />
+      <Outlet />
+    </>
+  );
+}
 
 export default function App() {
   return (
@@ -37,7 +47,7 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute requiredRole="student">
-            <StudentNavbar />
+            <StudentLayout />
           </ProtectedRoute>
         }
       >

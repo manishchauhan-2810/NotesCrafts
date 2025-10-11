@@ -75,7 +75,12 @@ export const loginTeacher = async (req, res) => {
     res.status(200).json({
       message: "Teacher login successful",
       token,
-      teacher: { id: teacher._id, name: teacher.name, email: teacher.email },
+      teacher: { 
+        id: teacher._id, 
+        name: teacher.name, 
+        email: teacher.email,
+        role: 'teacher'  // ⭐ YE LINE ADD KI HAI - role explicitly bhej rahe hain
+      },
     });
   } catch (err) {
     console.error("Login Error:", err);

@@ -194,7 +194,7 @@ export default function Signup() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, role: 'student' })}
-                    className={`p-3 border-2 rounded-xl transition-all ${
+                    className={`p-3 border-2 rounded-xl transition-all cursor-pointer ${
                       formData.role === 'student'
                         ? 'border-purple-600 bg-purple-50'
                         : 'border-gray-300 hover:border-gray-400'
@@ -216,7 +216,7 @@ export default function Signup() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, role: 'teacher' })}
-                    className={`p-3 border-2 rounded-xl transition-all ${
+                    className={`p-3 border-2 rounded-xl transition-all cursor-pointer ${
                       formData.role === 'teacher'
                         ? 'border-purple-600 bg-purple-50'
                         : 'border-gray-300 hover:border-gray-400'
@@ -291,7 +291,7 @@ export default function Signup() {
                 <input
                   type="checkbox"
                   required
-                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1 cursor-pointer"
                 />
                 <label className="ml-2 text-sm text-gray-600">
                   I agree to the{' '}
@@ -309,7 +309,7 @@ export default function Signup() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>

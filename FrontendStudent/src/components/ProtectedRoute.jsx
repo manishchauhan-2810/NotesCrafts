@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
   // If no user -> redirect to /login
   if (!user) return <Navigate to="/login" replace />;
 
-  // Only redirect if user has a role and it mismatches the requiredRole
+  // ⭐ ONLY check role if requiredRole is provided AND user has a role
   if (requiredRole && user.role && user.role !== requiredRole) {
     const target =
       user.role === "teacher"
