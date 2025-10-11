@@ -11,13 +11,14 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "student",
+    role: "teacher",
   });
 
   const TEACHER_URL = import.meta.env.VITE_TEACHER_URL || "http://localhost:5174";
   const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || "http://localhost:5173";
 
   const handleRoleClick = (role) => {
+    // If target origin is this origin, just toggle role locally
     const target = role === "student" ? STUDENT_URL : TEACHER_URL;
     try {
       const targetOrigin = new URL(target).origin;
@@ -25,8 +26,11 @@ export default function Login() {
         setFormData((p) => ({ ...p, role }));
         return;
       }
-    } catch {}
+    } catch {
+      // fallthrough to redirect
+    }
 
+    // Clear local user on this origin to avoid loops and do a single redirect
     localStorage.removeItem("user");
     window.location.replace(target);
   };
@@ -41,21 +45,26 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
+      // Replace with real auth call
       // const res = await axios.post('/auth/login', formData);
+      // localStorage.setItem('user', JSON.stringify(res.data.user));
+      // For now store a minimal user so routes work
       const user = { email: formData.email, role: formData.role };
       localStorage.setItem("user", JSON.stringify(user));
 
+      // If logged into other app, redirect to correct frontend
       const target =
-        formData.role === "teacher" ? TEACHER_URL : STUDENT_URL;
+        formData.role === "student" ? STUDENT_URL : TEACHER_URL;
       const targetOrigin = new URL(target).origin;
       if (window.location.origin !== targetOrigin) {
+        // ensure removal here as well (can't set cross-origin localStorage)
         localStorage.removeItem("user");
         window.location.replace(target);
         return;
       }
 
       navigate("/");
-    } catch {
+    } catch (err) {
       setError("Login failed");
     } finally {
       setLoading(false);
