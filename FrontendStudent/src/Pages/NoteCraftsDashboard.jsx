@@ -1,55 +1,125 @@
-import React, { useState } from "react";
-import { BookOpen, User, X } from "lucide-react";
+// FrontendStudent/src/Pages/NoteCraftsDashboard.jsx
+import React, { useState, useEffect } from "react";
+import { BookOpen, User, X, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function NoteCraftsDashboard() {
   const navigate = useNavigate();
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [classId, setClassId] = useState("");
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [classCode, setClassCode] = useState("");
+  const [myCourses, setMyCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Combined the better parts of both versions
-  const myCourses = [
-    {
-      id: 1,
-      title: "Web Development Fundamentals",
-      teacher: "Ms. Anjali Gupta",
-      color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-      courseId: "web-dev-fundamentals",
-    },
-    {
-      id: 2,
-      title: "Python for Beginners",
-      teacher: "Mr. Rahul Verma",
-      color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      courseId: "python-beginners",
-    },
-    {
-      id: 3,
-      title: "Database Management",
-      teacher: "Prof. Amit Kumar",
-      color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      courseId: "database-management",
-    },
-    {
-      id: 4,
-      title: "Java",
-      teacher: "Deepak Singh",
-      color: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
-      courseId: 101,
-    },
-  ];
+  // Get student info from localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const studentId = user.id || user._id;
 
-  const handleJoinClass = (e) => {
+  // Fetch student's enrolled classes
+  useEffect(() => {
+    const fetchEnrolledClasses = async () => {
+      if (!studentId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:5000/api/classroom", {
+          params: { userId: studentId, role: "student" },
+        });
+
+        const classes = response.data.classrooms || [];
+        
+        // Transform backend data to match UI format
+        const formattedClasses = classes.map((cls, idx) => ({
+          id: cls._id,
+          title: cls.name,
+          teacher: cls.teacherId?.name || "Teacher",
+          color: getGradientColor(idx),
+          courseId: cls._id,
+          classCode: cls.classCode,
+        }));
+
+        setMyCourses(formattedClasses);
+      } catch (err) {
+        console.error("Error fetching classes:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnrolledClasses();
+  }, [studentId]);
+
+  // Function to get different gradient colors
+  const getGradientColor = (index) => {
+    const colors = [
+      "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    ];
+    return colors[index % colors.length];
+  };
+
+  const handleJoinClass = async (e) => {
     e.preventDefault();
-    if (classId.trim()) {
-      alert(`Joining class with ID: ${classId}`);
-      setClassId("");
-      setShowJoinModal(false);
-    } else {
-      // Default navigate for static demo
-      setShowJoinModal(false);
-      navigate("/course/101");
+    
+    if (!classCode.trim()) {
+      setError("Please enter a class code");
+      return;
+    }
+
+    if (!studentId) {
+      setError("Please login to join a class");
+      return;
+    }
+
+    setJoining(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/classroom/join",
+        {
+          studentId: studentId,
+          classCode: classCode.trim().toUpperCase(),
+        }
+      );
+
+      setSuccess(`Successfully joined ${response.data.classroom.name}!`);
+      
+      // Add new class to the list
+      const newClass = {
+        id: response.data.classroom._id,
+        title: response.data.classroom.name,
+        teacher: "Teacher",
+        color: getGradientColor(myCourses.length),
+        courseId: response.data.classroom._id,
+        classCode: response.data.classroom.classCode,
+      };
+      
+      setMyCourses((prev) => [...prev, newClass]);
+      
+      setTimeout(() => {
+        setClassCode("");
+        setShowJoinModal(false);
+        setSuccess("");
+      }, 2000);
+    } catch (err) {
+      console.error("Join class error:", err);
+      setError(
+        err.response?.data?.error || "Failed to join class. Please check the code and try again."
+      );
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -73,6 +143,12 @@ export default function NoteCraftsDashboard() {
           <User size={18} className="mr-2 text-indigo-600" />
           <span>{course.teacher}</span>
         </div>
+
+        {course.classCode && (
+          <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded font-mono text-center">
+            Code: {course.classCode}
+          </div>
+        )}
 
         <button
           onClick={(e) => {
@@ -101,7 +177,7 @@ export default function NoteCraftsDashboard() {
           </div>
           <button
             onClick={() => setShowJoinModal(true)}
-            className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all cursor-pointer"
+            className="px-6 py-3 rounded-lg font-medium text-white flex items-center gap-2 transition-all cursor-pointer hover:shadow-lg"
             style={{
               background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
             }}
@@ -111,12 +187,46 @@ export default function NoteCraftsDashboard() {
           </button>
         </div>
 
-        {/* My Courses Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {myCourses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading your courses...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && myCourses.length === 0 && (
+          <div className="text-center mt-20">
+            <BookOpen size={64} className="mx-auto text-gray-300 mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+              No classes yet
+            </h2>
+            <p className="text-gray-500 mb-6">
+              Join a class using a class code from your teacher
+            </p>
+            <button
+              onClick={() => setShowJoinModal(true)}
+              className="px-6 py-3 rounded-lg font-medium text-white transition-all"
+              style={{
+                background: "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
+              }}
+            >
+              Join Your First Class
+            </button>
+          </div>
+        )}
+
+        {/* My Courses Grid */}
+        {!loading && myCourses.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {myCourses.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Join Class Modal */}
@@ -124,7 +234,12 @@ export default function NoteCraftsDashboard() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
             <button
-              onClick={() => setShowJoinModal(false)}
+              onClick={() => {
+                setShowJoinModal(false);
+                setError("");
+                setSuccess("");
+                setClassCode("");
+              }}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               <X size={24} />
@@ -141,35 +256,63 @@ export default function NoteCraftsDashboard() {
                 Join a Class
               </h3>
               <p className="text-gray-600">
-                Enter a Class ID or click join to enter the sample course.
+                Enter the class code provided by your teacher
               </p>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700 text-sm">
+                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{success}</span>
+              </div>
+            )}
 
             <form onSubmit={handleJoinClass} className="flex flex-col gap-3">
               <input
                 type="text"
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-                placeholder="Enter Class ID"
-                className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                value={classCode}
+                onChange={(e) => {
+                  setClassCode(e.target.value.toUpperCase());
+                  setError("");
+                }}
+                placeholder="Enter Class Code (e.g., ABC123)"
+                className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase font-mono text-center text-lg tracking-wider"
+                maxLength={6}
+                disabled={joining}
               />
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowJoinModal(false)}
-                  className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setShowJoinModal(false);
+                    setError("");
+                    setSuccess("");
+                    setClassCode("");
+                  }}
+                  className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  disabled={joining}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-lg text-white font-medium transition-all"
+                  disabled={joining || !classCode.trim()}
+                  className="flex-1 py-3 rounded-lg text-white font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     background:
                       "linear-gradient(135deg, #6D28D9 0%, #9333EA 100%)",
                   }}
                 >
-                  Join Class
+                  {joining ? "Joining..." : "Join Class"}
                 </button>
               </div>
             </form>

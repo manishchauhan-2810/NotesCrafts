@@ -1,15 +1,20 @@
+// FrontendTeacher/src/Pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ClassCard from "../components/ClassCard";
 import NewClass from "../components/NewClass";
 import { getClassrooms, createClassroom } from "../api/classroomApi";
 
-const Dashboard = ({ onClassClick }) => {
+const Dashboard = () => {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const teacherId = "68e17b57dc1316f0a041792f";
+  // Get teacher ID from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const teacherId = user.id || user._id;
   const role = "teacher";
 
   useEffect(() => {
@@ -17,6 +22,7 @@ const Dashboard = ({ onClassClick }) => {
       try {
         setLoading(true);
         const data = await getClassrooms(teacherId, role);
+        console.log("Fetched classrooms:", data);
         setClasses(data || []);
       } catch (error) {
         console.error("Error fetching classrooms:", error);
@@ -24,8 +30,11 @@ const Dashboard = ({ onClassClick }) => {
         setLoading(false);
       }
     };
-    fetchClasses();
-  }, []);
+    
+    if (teacherId) {
+      fetchClasses();
+    }
+  }, [teacherId]);
 
   const handleCreateClass = async (newClassData) => {
     try {
@@ -33,6 +42,7 @@ const Dashboard = ({ onClassClick }) => {
       const response = await createClassroom(teacherId, name);
       if (response && response.classroom) {
         setClasses((prev) => [...prev, response.classroom]);
+        alert(`Class created successfully! Class Code: ${response.classroom.classCode}`);
       }
       setIsModalOpen(false);
     } catch (error) {
@@ -41,12 +51,25 @@ const Dashboard = ({ onClassClick }) => {
     }
   };
 
+  const handleClassClick = (classItem) => {
+    navigate(`/class/${classItem._id}`);
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header onLogoClick={handleLogoClick} />
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">My Classes</h1>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">My Classes</h1>
+            <p className="text-gray-600 mt-1">
+              Manage your classes and share codes with students
+            </p>
+          </div>
           {classes.length > 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
@@ -58,11 +81,16 @@ const Dashboard = ({ onClassClick }) => {
         </div>
 
         {loading ? (
-          <p className="text-gray-500">Loading classrooms...</p>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading classrooms...</p>
+            </div>
+          </div>
         ) : classes.length === 0 ? (
           <div className="text-center mt-20">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-              You haven’t created any classrooms yet.
+              You haven't created any classrooms yet.
             </h2>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -78,12 +106,15 @@ const Dashboard = ({ onClassClick }) => {
                 key={classItem._id}
                 classData={{
                   id: classItem._id,
+                  _id: classItem._id,
                   name: classItem.name,
                   subject: classItem.name,
                   studentCount: classItem.students?.length || 0,
+                  classCode: classItem.classCode, // ⭐ Pass classCode
+                  students: classItem.students, // ⭐ Pass students array
                   color: "bg-gradient-to-br from-purple-500 to-purple-700",
                 }}
-                onClick={() => onClassClick(classItem)}
+                onClick={() => handleClassClick(classItem)}
               />
             ))}
           </div>

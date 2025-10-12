@@ -1,5 +1,5 @@
 // FrontendTeacher/src/App.jsx
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./Pages/Dashboard";
@@ -12,9 +12,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("dashboard");
-  const [selectedClass, setSelectedClass] = useState(null);
-
   return (
     <Routes>
       {/* 🔓 Public Routes (accessible only when not logged in) */}
@@ -37,31 +34,30 @@ export default function App() {
 
       {/* 🔒 Protected Routes (accessible only for logged-in teachers) */}
       <Route
-        path="/classdetails/:classId/testpapers/viewresults/:testId"
+        path="/"
         element={
           <ProtectedRoute requiredRole="teacher">
-            <TestResultsViewer />
+            <Dashboard />
           </ProtectedRoute>
         }
       />
 
+      {/* 🎯 Dynamic Class Detail Route with unique classId */}
       <Route
-        path="/"
+        path="/class/:classId"
         element={
           <ProtectedRoute requiredRole="teacher">
-            {currentPage === "dashboard" ? (
-              <Dashboard
-                onClassClick={(classData) => {
-                  setSelectedClass(classData);
-                  setCurrentPage("class");
-                }}
-              />
-            ) : (
-              <ClassDetail
-                classData={selectedClass}
-                onBack={() => setCurrentPage("dashboard")}
-              />
-            )}
+            <ClassDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Test Results Route */}
+      <Route
+        path="/class/:classId/testpapers/viewresults/:testId"
+        element={
+          <ProtectedRoute requiredRole="teacher">
+            <TestResultsViewer />
           </ProtectedRoute>
         }
       />
