@@ -8,6 +8,12 @@ import TestResultsViewer from "./Pages/TestResultsViewer";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
+// Import new tab pages
+import NotesPage from "./Pages/NotesPage";
+import QuizzesPage from "./components/QuizzesPage";
+import TestPapersPage from "./components/TestPapersPage";
+import DoubtsPage from "./Pages/DoubtsPage";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
@@ -42,7 +48,7 @@ export default function App() {
         }
       />
 
-      {/* 🎯 Dynamic Class Detail Route with unique classId */}
+      {/* 🎯 Class Detail Routes - Main Layout */}
       <Route
         path="/class/:classId"
         element={
@@ -50,11 +56,18 @@ export default function App() {
             <ClassDetail />
           </ProtectedRoute>
         }
-      />
+      >
+        {/* Nested Routes for Tabs */}
+        <Route index element={<Navigate to="notes" replace />} />
+        <Route path="notes" element={<NotesPage />} />
+        <Route path="quizzes" element={<QuizzesPage />} />
+        <Route path="test-papers" element={<TestPapersPage />} />
+        <Route path="doubts" element={<DoubtsPage />} />
+      </Route>
 
       {/* Test Results Route */}
       <Route
-        path="/class/:classId/testpapers/viewresults/:testId"
+        path="/class/:classId/test-papers/results/:testId"
         element={
           <ProtectedRoute requiredRole="teacher">
             <TestResultsViewer />

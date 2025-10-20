@@ -1,36 +1,44 @@
 // FrontendTeacher/src/Pages/ClassDetail.jsx
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useNavigate, Outlet, useLocation } from "react-router-dom";
 import axios from "axios";
 import Header from "../components/Header";
 import ClassHeader from "../components/ClassHeader";
 import ClassTabs from "../components/ClassTabs";
-import PostCreationBox from "../components/PostCreationBox";
-import PostCard from "../components/PostCard";
-import DoubtChat from "../components/DoubtChat";
 
 const ClassDetail = () => {
-  const { classId } = useParams(); // Get classId from URL
+  const { classId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const [activeTab, setActiveTab] = useState("stream");
   const [classData, setClassData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      author: "You",
-      date: new Date().toISOString().split("T")[0],
-      title: "Welcome to the class",
-      files: [],
-    },
-  ]);
 
-  // Get current user from localStorage
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  // Memoize currentUser to prevent re-parsing on every render
+  const currentUser = useMemo(() => {
+    return JSON.parse(localStorage.getItem('user') || '{}');
+  }, []);
 
+  // Memoize active tab calculation
+  const activeTab = useMemo(() => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    // Only return valid tab names
+    const validTabs = ['notes', 'quizzes', 'test-papers', 'doubts'];
+    return validTabs.includes(lastPart) ? lastPart : 'notes';
+  }, [location.pathname]);
+
+  // Memoize callback functions to prevent re-creation
+  const handleBack = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  const handleLogoClick = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  // Fetch classroom data only when classId changes
   useEffect(() => {
-    // Fetch classroom data based on classId
     const fetchClassData = async () => {
       try {
         setLoading(true);
@@ -44,7 +52,6 @@ const ClassDetail = () => {
           }
         );
 
-        // Find the specific classroom by ID
         const classroom = response.data.classrooms.find(
           (c) => c._id === classId
         );
@@ -72,31 +79,13 @@ const ClassDetail = () => {
     if (classId) {
       fetchClassData();
     }
-  }, [classId, navigate, currentUser.id, currentUser._id]);
+  }, [classId]); // Only depend on classId
 
-  const handleCreatePost = (postData) => {
-    const newPost = {
-      id: posts.length + 1,
-      author: currentUser.name || "You",
-      date: new Date().toISOString().split("T")[0],
-      title: postData.title,
-      files: postData.files,
-    };
-    setPosts([newPost, ...posts]);
-  };
-
-  const handleTabChange = (tabId) => {
-    console.log("Active tab changed to:", tabId);
-    setActiveTab(tabId);
-  };
-
-  const handleBack = () => {
-    navigate("/");
-  };
-
-  const handleLogoClick = () => {
-    navigate("/");
-  };
+  // Memoize outlet context to prevent unnecessary child re-renders
+  const outletContext = useMemo(() => ({
+    classData,
+    currentUser
+  }), [classData, currentUser]);
 
   if (loading) {
     return (
@@ -141,37 +130,12 @@ const ClassDetail = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <ClassHeader classData={classData} onBack={handleBack} />
-        <ClassTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        <ClassTabs activeTab={activeTab} classId={classId} />
 
-        {/* Stream Tab */}
-        {activeTab === "stream" && (
-          <div>
-            <PostCreationBox onCreatePost={handleCreatePost} />
-            <div className="space-y-4">
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Doubts Tab */}
-        {activeTab === "doubts" && (
-          <div
-            className="bg-white rounded-xl border overflow-hidden shadow-lg"
-            style={{ height: "calc(100vh - 280px)" }}
-          >
-            <DoubtChat
-              classId={classData._id || classData.id}
-              user={{
-                id: currentUser._id || currentUser.id,
-                _id: currentUser._id || currentUser.id,
-                name: currentUser.name,
-                role: currentUser.role || "teacher",
-              }}
-            />
-          </div>
-        )}
+        {/* Only this section re-renders on route change */}
+        <div className="mt-6">
+          <Outlet context={outletContext} />
+        </div>
       </main>
     </div>
   );

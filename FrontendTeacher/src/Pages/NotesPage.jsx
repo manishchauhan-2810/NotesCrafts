@@ -1,25 +1,29 @@
+// FrontendTeacher/src/Pages/NotesPage.jsx
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import PostCreationBox from '../components/PostCreationBox';
 import PostCard from '../components/PostCard';
 
 const NotesPage = () => {
+  const { currentUser } = useOutletContext();
+  
   const [posts, setPosts] = useState([
     {
       id: 1,
       author: 'You',
-      date: '2024-10-01',
-      title: 'Photosynthesis Notes',
-      files: []
-    }
+      date: new Date().toISOString().split('T')[0],
+      title: 'Welcome to the class',
+      files: [],
+    },
   ]);
 
   const handleCreatePost = (postData) => {
     const newPost = {
       id: posts.length + 1,
-      author: 'You',
+      author: currentUser?.name || 'You',
       date: new Date().toISOString().split('T')[0],
       title: postData.title,
-      files: postData.files
+      files: postData.files,
     };
     setPosts([newPost, ...posts]);
   };
