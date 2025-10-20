@@ -5,13 +5,18 @@ import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import StudentNavbar from "./components/StudentNavbar";
 import NoteCraftsDashboard from "./Pages/NoteCraftsDashboard";
 import CourseDetailPage from "./Pages/CourseDetailPage";
+import StudentNotesPage from "./Pages/StudentNotesPage";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
-// Layout component that includes navbar + page content
+// Import existing tab components
+import Quiz from "./Pages/Quiz";
+import NotesAndAssignments from "./Pages/NotesAndAssignments";
+import TestPapers from "./Pages/TestPapers";
+
 function StudentLayout() {
   return (
     <>
@@ -24,7 +29,7 @@ function StudentLayout() {
 export default function App() {
   return (
     <Routes>
-      {/* Public routes (blocked if logged in) */}
+      {/* Public routes */}
       <Route
         path="/login"
         element={
@@ -52,7 +57,18 @@ export default function App() {
         }
       >
         <Route index element={<NoteCraftsDashboard />} />
-        <Route path="course/:id" element={<CourseDetailPage />} />
+        
+        {/* Course Detail with Nested Routes */}
+        <Route path="course/:id" element={<CourseDetailPage />}>
+          {/* Default redirect to notes */}
+          <Route index element={<Navigate to="notes" replace />} />
+          
+          {/* Tab Routes */}
+          <Route path="notes" element={<StudentNotesPage />} />
+          <Route path="quiz" element={<Quiz />} />
+          <Route path="assignment" element={<NotesAndAssignments />} />
+          <Route path="test" element={<TestPapers />} />
+        </Route>
       </Route>
 
       {/* Redirect any unknown route */}

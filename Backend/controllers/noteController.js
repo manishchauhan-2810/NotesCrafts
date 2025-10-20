@@ -1,20 +1,41 @@
+// Backend/controllers/noteController.js
 import mongoose from "mongoose";
 import multer from "multer";
 import Note from "../models/Note.js";
-import { bucket, conn } from "../config/gridfs.js"; // ✅ updated import
+import { bucket, conn } from "../config/gridfs.js";
 
 // Multer setup for GridFS (memory storage for streaming to bucket)
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed!'), false);
+    }
+  }
+});
 
 export const uploadNote = [
   upload.single("file"),
   async (req, res) => {
     try {
       const { title, uploadedBy, classroomId } = req.body;
-      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      if (!title) return res.status(400).json({ message: "Title is required" });
-      if (!uploadedBy) return res.status(400).json({ message: "uploadedBy is required" });
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+      if (!uploadedBy) {
+        return res.status(400).json({ message: "uploadedBy is required" });
+      }
+      if (!classroomId) {
+        return res.status(400).json({ message: "classroomId is required" });
+      }
 
       // Upload file to GridFS
       const uploadStream = bucket.openUploadStream(req.file.originalname, {
@@ -28,24 +49,33 @@ export const uploadNote = [
           title,
           uploadedBy,
           classroomId,
-          fileId: uploadStream.id, // ✅ Use uploadStream.id
+          fileId: uploadStream.id,
         });
 
-        res.status(201).json({ message: "Note uploaded successfully", note });
+        res.status(201).json({ 
+          message: "Note uploaded successfully", 
+          note 
+        });
       });
 
       uploadStream.on("error", (err) => {
         console.error("GridFS Upload Error:", err);
-        res.status(500).json({ message: "Error uploading file", error: err.message });
+        res.status(500).json({ 
+          message: "Error uploading file", 
+          error: err.message 
+        });
       });
     } catch (error) {
       console.error("Upload Note Error:", error);
-      res.status(500).json({ message: "Server error", error: error.message });
+      res.status(500).json({ 
+        message: "Server error", 
+        error: error.message 
+      });
     }
   },
 ];
 
-// Get all notes
+// Get all notes (for admin purposes)
 export const getNotes = async (req, res) => {
   try {
     const notes = await Note.find().sort({ createdAt: -1 });
@@ -53,6 +83,32 @@ export const getNotes = async (req, res) => {
   } catch (error) {
     console.error("Get Notes Error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get notes by classroom ID
+export const getNotesByClassroom = async (req, res) => {
+  try {
+    const { classroomId } = req.params;
+    
+    if (!classroomId) {
+      return res.status(400).json({ message: "Classroom ID is required" });
+    }
+
+    const notes = await Note.find({ classroomId })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({ 
+      success: true,
+      count: notes.length,
+      notes 
+    });
+  } catch (error) {
+    console.error("Get Classroom Notes Error:", error);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
 
@@ -66,9 +122,13 @@ export const getNoteFile = async (req, res) => {
 
     readStream.on("error", (err) => {
       console.error("GridFS Read Error:", err);
-      res.status(404).json({ message: "File not found", error: err.message });
+      res.status(404).json({ 
+        message: "File not found", 
+        error: err.message 
+      });
     });
 
+    res.set('Content-Type', 'application/pdf');
     readStream.pipe(res);
   } catch (error) {
     console.error(error);
