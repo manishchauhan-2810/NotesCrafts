@@ -1,7 +1,7 @@
 // Backend/config/gemini.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = "AIzaSyCwv33KLrsgD3XYeW84vWnWxUML5a4tGQk";
+const apiKey = process.env.GEN_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
