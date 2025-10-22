@@ -6,6 +6,8 @@ import {
   getQuizzesByClassroom,
   updateQuiz,
   deleteQuiz,
+  publishQuizWithTiming,      // ⭐ NEW
+  getActiveQuizzesForStudent  // ⭐ NEW
 } from '../controllers/quizController.js';
 
 const router = express.Router();
@@ -18,6 +20,12 @@ router.get('/:quizId', getQuiz);
 
 // Get quizzes by classroom
 router.get('/classroom/:classroomId', getQuizzesByClassroom);
+
+// ⭐ NEW - Get active quizzes for students (must be before /:quizId to avoid route conflict)
+router.get('/active/classroom/:classroomId', getActiveQuizzesForStudent);
+
+// ⭐ NEW - Publish quiz with timing
+router.put('/:quizId/publish', publishQuizWithTiming);
 
 // Update quiz
 router.put('/:quizId', updateQuiz);

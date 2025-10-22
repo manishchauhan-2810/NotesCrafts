@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { getNotesByClassroom } from "../api/notesApi";
+import PublishQuizModal from "./PublishQuizModal";
 
 const QuizzesPage = () => {
   const { classId } = useParams();
@@ -32,6 +33,9 @@ const QuizzesPage = () => {
 
   const [availableNotes, setAvailableNotes] = useState([]);
   const [selectedNotes, setSelectedNotes] = useState([]);
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishingQuiz, setPublishingQuiz] = useState(null);
 
   // Fetch quizzes on load
   useEffect(() => {
@@ -88,55 +92,61 @@ const QuizzesPage = () => {
       };
 
       console.log("📤 Sending payload:", JSON.stringify(payload, null, 2));
-      
+
       const response = await axios.post(
-        'http://localhost:5000/api/quiz/generate-ai',
+        "http://localhost:5000/api/quiz/generate-ai",
         payload,
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
       console.log("✅ Response received:", response.data);
 
       // Add to drafts
-      setDrafts(prev => [response.data.quiz, ...prev]);
-      
+      setDrafts((prev) => [response.data.quiz, ...prev]);
+
       // Show success message
       const stats = response.data.stats;
       alert(
         `✅ Quiz Generated Successfully!\n\n` +
-        `📊 Details:\n` +
-        `• Questions: ${stats.questionsGenerated}\n` +
-        `• Notes processed: ${stats.processedNotes}/${stats.totalNotes}\n` +
-        `• Content analyzed: ${(stats.textLength / 1000).toFixed(1)}K characters`
+          `📊 Details:\n` +
+          `• Questions: ${stats.questionsGenerated}\n` +
+          `• Notes processed: ${stats.processedNotes}/${stats.totalNotes}\n` +
+          `• Content analyzed: ${(stats.textLength / 1000).toFixed(
+            1
+          )}K characters`
       );
-      
+
       // Close modal and reset
       setSelectedNotes([]);
       setShowAIModal(false);
     } catch (err) {
       console.error("❌ Generation error:", err);
       console.error("Error response:", err.response?.data);
-      
+
       let errorMessage = "Failed to generate quiz";
-      
+
       if (err.response?.data?.error) {
         errorMessage = `❌ ${err.response.data.error}`;
-        
+
         if (err.response.data.stats) {
-          errorMessage += `\n\n📊 Stats:\n${JSON.stringify(err.response.data.stats, null, 2)}`;
+          errorMessage += `\n\n📊 Stats:\n${JSON.stringify(
+            err.response.data.stats,
+            null,
+            2
+          )}`;
         }
-        
+
         if (err.response.data.details) {
           errorMessage += `\n\n💡 Details: ${err.response.data.details}`;
         }
       } else if (err.message) {
         errorMessage = `❌ ${err.message}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       setIsGenerating(false);
@@ -201,22 +211,15 @@ const QuizzesPage = () => {
     }
   };
 
-  const handlePublish = async (id) => {
-    const quiz = drafts.find((q) => q._id === id);
-    if (!quiz) return;
+  const handlePublish = (quiz) => {
+    setPublishingQuiz(quiz);
+    setShowPublishModal(true);
+  };
 
-    try {
-      const updatedQuiz = { ...quiz, status: "published" };
-      await axios.put(`http://localhost:5000/api/quiz/${id}`, updatedQuiz);
-
-      setPublished([updatedQuiz, ...published]);
-      setDrafts(drafts.filter((q) => q._id !== id));
-
-      alert("Quiz published successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to publish quiz");
-    }
+  const handlePublished = () => {
+    setShowPublishModal(false);
+    setPublishingQuiz(null);
+    fetchQuizzes(); // Refresh quiz list
   };
 
   const toggleNoteSelection = (noteId) => {
@@ -277,7 +280,7 @@ const QuizzesPage = () => {
         <h2 className="text-2xl font-bold text-gray-900">Quizzes</h2>
         <button
           onClick={handleOpenAIModal}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
         >
           <Sparkles className="w-5 h-5" />
           Create with AI
@@ -314,19 +317,20 @@ const QuizzesPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleEdit(quiz)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                   >
                     <Pencil className="w-4 h-4" /> Edit
                   </button>
                   <button
                     onClick={() => handleDelete(quiz._id, "draft")}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
+                  {/* ⭐ CHANGED: Pass quiz instead of quiz._id */}
                   <button
-                    onClick={() => handlePublish(quiz._id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => handlePublish(quiz)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
                   >
                     <CheckCircle className="w-4 h-4" /> Publish
                   </button>
@@ -365,19 +369,19 @@ const QuizzesPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleView(quiz)}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4" /> View Quiz
                   </button>
                   <button
                     onClick={() => handleEdit(quiz)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                   >
                     <Pencil className="w-4 h-4" /> Edit
                   </button>
                   <button
                     onClick={() => handleDelete(quiz._id, "published")}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
@@ -404,7 +408,7 @@ const QuizzesPage = () => {
                 className="text-gray-400 hover:text-gray-600"
                 disabled={isGenerating}
               >
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6 cursor-pointer" />
               </button>
             </div>
 
@@ -473,14 +477,14 @@ const QuizzesPage = () => {
                   setSelectedNotes([]);
                 }}
                 disabled={isGenerating}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWithAI}
                 disabled={selectedNotes.length === 0 || isGenerating}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {isGenerating ? (
                   <span className="flex items-center justify-center gap-2">
@@ -509,7 +513,7 @@ const QuizzesPage = () => {
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6 cursor-pointer" />
               </button>
             </div>
 
@@ -536,7 +540,7 @@ const QuizzesPage = () => {
                   </h4>
                   <button
                     onClick={addQuestion}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     Add Question
@@ -609,7 +613,11 @@ const QuizzesPage = () => {
                       <select
                         value={q.correctAnswer}
                         onChange={(e) =>
-                          updateQuestion(qIndex, "correctAnswer", e.target.value)
+                          updateQuestion(
+                            qIndex,
+                            "correctAnswer",
+                            e.target.value
+                          )
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                       >
@@ -632,13 +640,13 @@ const QuizzesPage = () => {
                   setShowEditModal(false);
                   setEditingQuiz(null);
                 }}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateQuiz}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Save className="w-5 h-5" />
                 Save Changes
@@ -724,6 +732,18 @@ const QuizzesPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ⭐ NEW - Publish Quiz Modal */}
+      {showPublishModal && publishingQuiz && (
+        <PublishQuizModal
+          quiz={publishingQuiz}
+          onClose={() => {
+            setShowPublishModal(false);
+            setPublishingQuiz(null);
+          }}
+          onPublished={handlePublished}
+        />
       )}
     </div>
   );

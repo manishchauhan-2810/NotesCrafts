@@ -298,3 +298,97 @@ export const deleteQuiz = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// ⭐ NEW FUNCTION - Publish quiz with timing
+/**
+ * Publish quiz with timing
+ * PUT /api/quiz/:quizId/publish
+ */
+export const publishQuizWithTiming = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const { duration, startTime, endTime } = req.body;
+
+    console.log("📤 Publishing quiz:", { quizId, duration, startTime, endTime });
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    // Calculate endTime if not provided
+    let calculatedEndTime = endTime;
+    if (startTime && duration && !endTime) {
+      const start = new Date(startTime);
+      calculatedEndTime = new Date(start.getTime() + duration * 60000); // Convert minutes to milliseconds
+    }
+
+    // Update quiz
+    quiz.status = "published";
+    quiz.duration = duration || null;
+    quiz.startTime = startTime || null;
+    quiz.endTime = calculatedEndTime || null;
+    quiz.isActive = true;
+
+    await quiz.save();
+
+    console.log("✅ Quiz published successfully");
+
+    res.status(200).json({
+      success: true,
+      message: "Quiz published successfully",
+      quiz
+    });
+  } catch (error) {
+    console.error("❌ Publish error:", error);
+    res.status(500).json({ 
+      error: "Failed to publish quiz",
+      details: error.message 
+    });
+  }
+};
+
+// ⭐ NEW FUNCTION - Get active quizzes for students
+/**
+ * Get active quizzes for student (filters by time)
+ * GET /api/quiz/active/classroom/:classroomId
+ */
+export const getActiveQuizzesForStudent = async (req, res) => {
+  try {
+    const { classroomId } = req.params;
+    
+    const now = new Date();
+    
+    const quizzes = await Quiz.find({ 
+      classroomId,
+      status: "published"
+    }).sort({ createdAt: -1 });
+
+    // Filter active quizzes based on time
+    const activeQuizzes = quizzes.map(quiz => {
+      let isActive = true;
+      
+      if (quiz.endTime && now > new Date(quiz.endTime)) {
+        isActive = false;
+      }
+      
+      if (quiz.startTime && now < new Date(quiz.startTime)) {
+        isActive = false;
+      }
+
+      return {
+        ...quiz.toObject(),
+        isActive
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: activeQuizzes.length,
+      quizzes: activeQuizzes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};

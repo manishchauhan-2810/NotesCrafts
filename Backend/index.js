@@ -14,6 +14,7 @@ import noteRoutes from "./routes/noteRoutes.js";
 import quizRoutes from "./routes/quizRoutes.js";
 import questionBankRoutes from "./routes/questionBankRoutes.js";
 import doubtRoutes from "./routes/doubtRoutes.js";
+import quizSubmissionRoutes from "./routes/quizSubmissionRoutes.js"; // ⭐ NEW
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use("/api/announcement", announcementRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/question-bank", questionBankRoutes);
 app.use("/api/doubts", doubtRoutes);
+app.use("/api/quiz-submission", quizSubmissionRoutes); // ⭐ NEW
 
 // Health check
 app.get("/", (req, res) => {

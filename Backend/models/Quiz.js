@@ -32,6 +32,29 @@ const quizSchema = new mongoose.Schema({
     enum: ["draft", "published"],
     default: "draft"
   },
+  
+  // ⭐ NEW FIELDS FOR TIMING (Added for quiz timing feature)
+  duration: { 
+    type: Number, 
+    required: false,
+    default: null // Duration in minutes
+  },
+  startTime: {
+    type: Date,
+    required: false,
+    default: null
+  },
+  endTime: {
+    type: Date,
+    required: false,
+    default: null
+  },
+  isActive: {
+    type: Boolean,
+    default: true // Auto-calculated based on time
+  },
+  // ⭐ END NEW FIELDS
+  
   createdAt: { 
     type: Date, 
     default: Date.now 
