@@ -14,7 +14,9 @@ import noteRoutes from "./routes/noteRoutes.js";
 import quizRoutes from "./routes/quizRoutes.js";
 import questionBankRoutes from "./routes/questionBankRoutes.js";
 import doubtRoutes from "./routes/doubtRoutes.js";
-import quizSubmissionRoutes from "./routes/quizSubmissionRoutes.js"; // ⭐ NEW
+import quizSubmissionRoutes from "./routes/quizSubmissionRoutes.js";
+import testPaperRoutes from "./routes/testPaperRoutes.js"; // ✅ NEW
+import testSubmissionRoutes from "./routes/testSubmissionRoutes.js"; // ✅ NEW
 
 const app = express();
 
@@ -68,7 +70,9 @@ app.use("/api/announcement", announcementRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/question-bank", questionBankRoutes);
 app.use("/api/doubts", doubtRoutes);
-app.use("/api/quiz-submission", quizSubmissionRoutes); // ⭐ NEW
+app.use("/api/quiz-submission", quizSubmissionRoutes);
+app.use("/api/test-paper", testPaperRoutes); // ✅ NEW
+app.use("/api/test-submission", testSubmissionRoutes); // ✅ NEW
 
 // Health check
 app.get("/", (req, res) => {

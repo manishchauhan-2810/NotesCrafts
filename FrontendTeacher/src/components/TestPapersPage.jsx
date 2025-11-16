@@ -1,322 +1,354 @@
-import React, { useState } from 'react';
-import { Sparkles, Pencil, Trash2, CheckCircle, Eye, X, FileText, Plus, Minus } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom'; // ✅ import
+// FrontendTeacher/src/components/TestPapersPage.jsx
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Sparkles, Pencil, Trash2, CheckCircle, Eye, Loader, FileText } from 'lucide-react';
+import { 
+  getTestPapersByClassroom, 
+  deleteTestPaper,
+  generateTestPaperWithAI
+} from '../api/testPaperApi';
+import { getNotesByClassroom } from '../api/notesApi';
+import PublishTestModal from './PublishTestModal';
+import EditAnswerKeysModal from './EditAnswerKeysModal';
 
 const TestPapersPage = () => {
-  const [drafts, setDrafts] = useState([
-    { 
-      id: 1, 
-      title: 'Cell Structure Basics Test', 
-      status: 'draft',
-      questions: [
-        { id: 1, question: 'Explain the structure and function of mitochondria.', type: 'long', marks: 5 },
-        { id: 2, question: 'What is the role of ribosomes?', type: 'short', marks: 2 }
-      ]
-    }
-  ]);
-  const [published, setPublished] = useState([
-    { 
-      id: 2, 
-      title: 'Photosynthesis Test Paper', 
-      status: 'published', 
-      submissions: 18,
-      questions: [
-        { id: 1, question: 'Describe the process of photosynthesis in detail.', type: 'long', marks: 10 }
-      ]
-    }
-  ]);
+  const { classId } = useParams();
+  const navigate = useNavigate();
+
+  const [drafts, setDrafts] = useState([]);
+  const [published, setPublished] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const [editingTest, setEditingTest] = useState(null);
+  const [publishingTest, setPublishingTest] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  const [availableNotes] = useState([
-    { id: 1, title: 'Photosynthesis Notes', date: '2024-10-01' },
-    { id: 2, title: 'Cell Structure', date: '2024-09-28' },
-    { id: 3, title: 'Digestive System', date: '2024-09-25' },
-    { id: 4, title: 'Human Anatomy', date: '2024-09-20' },
-    { id: 5, title: 'Plant Biology', date: '2024-09-15' }
-  ]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+
+  const [availableNotes, setAvailableNotes] = useState([]);
   const [selectedNotes, setSelectedNotes] = useState([]);
 
-  // ✅ React Router navigate
-  const navigate = useNavigate();
-  const { classId } = useParams(); // get classId from route
+  // Fetch test papers
+  useEffect(() => {
+    fetchTestPapers();
+  }, [classId]);
 
+  const fetchTestPapers = async () => {
+    try {
+      setLoading(true);
+      const response = await getTestPapersByClassroom(classId);
+      const testPapers = response.testPapers || [];
+
+      setDrafts(testPapers.filter(t => t.status === 'draft'));
+      setPublished(testPapers.filter(t => t.status === 'published'));
+    } catch (error) {
+      console.error('Error fetching test papers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open AI modal and fetch notes
+  const handleOpenAIModal = async () => {
+    setShowAIModal(true);
+    setLoadingNotes(true);
+
+    try {
+      const response = await getNotesByClassroom(classId);
+      setAvailableNotes(response.notes || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      alert('Failed to load notes');
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  // Generate test paper with AI
   const handleGenerateWithAI = async () => {
-    if (selectedNotes.length === 0) return;
+    if (selectedNotes.length === 0) {
+      alert('Please select at least one note');
+      return;
+    }
+
     setIsGenerating(true);
 
-    const selectedNoteTitles = selectedNotes.map(id => 
-      availableNotes.find(n => n.id === id)?.title
-    );
-    
-   const generatedQuestions = [
-  // Long answer questions (5)
-  { id: 1, question: `Explain in detail the main concept discussed in ${selectedNoteTitles[0]}.`, type: 'long', marks: 10 },
-  { id: 2, question: `Describe the process or mechanism explained in the notes about ${selectedNoteTitles[0]}.`, type: 'long', marks: 8 },
-  { id: 3, question: `Discuss how ${selectedNoteTitles[0]} contributes to the overall topic or subject it belongs to.`, type: 'long', marks: 8 },
-  { id: 4, question: `Illustrate the advantages and disadvantages related to ${selectedNoteTitles[0]}.`, type: 'long', marks: 10 },
-  { id: 5, question: `Write a detailed explanation with examples to show how ${selectedNoteTitles[0]} works in real-world scenarios.`, type: 'long', marks: 10 },
+    try {
+      const response = await generateTestPaperWithAI(selectedNotes, classId);
 
-  // Short answer questions (10)
-  { id: 6, question: `What are the key components mentioned in ${selectedNoteTitles[0]}?`, type: 'short', marks: 3 },
-  { id: 7, question: `Define the important terms related to ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
-  { id: 8, question: `State any two features or properties of ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
-  { id: 9, question: `What is the significance of ${selectedNoteTitles[0]} in the topic?`, type: 'short', marks: 3 },
-  { id: 10, question: `Name one real-life application of ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
-  { id: 11, question: `List the steps involved in ${selectedNoteTitles[0]}.`, type: 'short', marks: 3 },
-  { id: 12, question: `Write a short note on ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 },
-  { id: 13, question: `What problem does ${selectedNoteTitles[0]} solve?`, type: 'short', marks: 2 },
-  { id: 14, question: `Mention the main idea behind ${selectedNoteTitles[0]}.`, type: 'short', marks: 3 },
-  { id: 15, question: `Give an example related to ${selectedNoteTitles[0]}.`, type: 'short', marks: 2 }
-];
+      setDrafts(prev => [response.testPaper, ...prev]);
 
-    if (selectedNotes.length > 1) {
-      generatedQuestions.push({
-        id: 5,
-        question: `Compare and contrast ${selectedNoteTitles[0]} with ${selectedNoteTitles[1]}.`,
-        type: 'long',
-        marks: 10
-      });
-    }
+      alert(`✅ Test Paper Generated!\n\n` +
+        `📊 Details:\n` +
+        `• Questions: ${response.stats.questionsGenerated}\n` +
+        `• Total Marks: ${response.stats.totalMarks}\n` +
+        `• Notes processed: ${response.stats.processedNotes}/${response.stats.totalNotes}`
+      );
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const newTest = {
-      id: Date.now(),
-      title: `Test Paper from ${selectedNoteTitles.join(', ')}`,
-      status: 'draft',
-      questions: generatedQuestions,
-      generatedFrom: selectedNotes.length
-    };
-    
-    setDrafts([...drafts, newTest]);
-    setSelectedNotes([]);
-    setShowAIModal(false);
-    setIsGenerating(false);
-  };
-
-  const handleEdit = (test) => setEditingTest({...test});
-  const handleUpdateTest = () => {
-    if (!editingTest) return;
-    if (editingTest.status === 'draft') {
-      setDrafts(drafts.map(t => t.id === editingTest.id ? editingTest : t));
-    } else {
-      setPublished(published.map(t => t.id === editingTest.id ? editingTest : t));
-    }
-    setEditingTest(null);
-    setShowEditModal(false);
-  };
-  const handleDelete = (id, status) => {
-    if (status === 'draft') setDrafts(drafts.filter(t => t.id !== id));
-    else setPublished(published.filter(t => t.id !== id));
-  };
-  const handlePublish = (id) => {
-    const test = drafts.find(t => t.id === id);
-    if (test) {
-      setPublished([...published, { ...test, status: 'published', submissions: 0 }]);
-      setDrafts(drafts.filter(t => t.id !== id));
+      setSelectedNotes([]);
+      setShowAIModal(false);
+    } catch (error) {
+      console.error('Generation error:', error);
+      alert(error.response?.data?.error || 'Failed to generate test paper');
+    } finally {
+      setIsGenerating(false);
     }
   };
+
+  const handleDelete = async (testId, status) => {
+    if (!confirm('Are you sure you want to delete this test paper?')) return;
+
+    try {
+      await deleteTestPaper(testId);
+
+      if (status === 'draft') {
+        setDrafts(drafts.filter(t => t._id !== testId));
+      } else {
+        setPublished(published.filter(t => t._id !== testId));
+      }
+
+      alert('Test paper deleted successfully!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete test paper');
+    }
+  };
+
+  const handleEditAnswerKeys = (test) => {
+    setEditingTest(test);
+    setShowEditModal(true);
+  };
+
+  const handlePublish = (test) => {
+    setPublishingTest(test);
+    setShowPublishModal(true);
+  };
+
+  const handleViewResults = (testId) => {
+    navigate(`/class/${classId}/test-papers/results/${testId}`);
+  };
+
   const toggleNoteSelection = (noteId) => {
-    setSelectedNotes(prev => prev.includes(noteId) ? prev.filter(id => id !== noteId) : [...prev, noteId]);
-  };
-  const updateTestTitle = (value) => setEditingTest({...editingTest, title: value});
-  const updateQuestion = (qIndex, field, value) => {
-    const updatedQuestions = [...editingTest.questions];
-    updatedQuestions[qIndex] = {...updatedQuestions[qIndex], [field]: value};
-    setEditingTest({...editingTest, questions: updatedQuestions});
-  };
-  const addQuestion = () => {
-    const newQuestion = { id: Date.now(), question: '', type: 'short', marks: 2 };
-    setEditingTest({ ...editingTest, questions: [...editingTest.questions, newQuestion] });
-  };
-  const removeQuestion = (qIndex) => {
-    const updatedQuestions = editingTest.questions.filter((_, i) => i !== qIndex);
-    setEditingTest({...editingTest, questions: updatedQuestions});
+    setSelectedNotes(prev =>
+      prev.includes(noteId)
+        ? prev.filter(id => id !== noteId)
+        : [...prev, noteId]
+    );
   };
 
-  const getTotalMarks = (questions) => {
-    return questions?.reduce((sum, q) => sum + (q.marks || 0), 0) || 0;
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader className="w-8 h-8 text-purple-600 animate-spin" />
+        <span className="ml-3 text-gray-600">Loading test papers...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Test Papers</h2>
-          <button
-            onClick={() => setShowAIModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Sparkles className="w-5 h-5" />
-            Create with AI
-          </button>
-        </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Test Papers</h2>
+        <button
+          onClick={handleOpenAIModal}
+          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+        >
+          <Sparkles className="w-5 h-5" />
+          Create with AI
+        </button>
+      </div>
 
-        {/* Drafts Section */}
-        <div className="mb-12">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Drafts</h3>
-          <div className="space-y-4">
-            {drafts.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <p className="text-gray-500">No drafts yet. Create your first test paper!</p>
-              </div>
-            ) : (
-              drafts.map(test => (
-                <div
-                  key={test.id}
-                  className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-4">
-                    <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">draft</span>
-                    <span className="text-sm text-gray-500">{test.questions?.length || 0} questions</span>
-                    <span className="text-sm text-gray-500">• {getTotalMarks(test.questions)} marks</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => { handleEdit(test); setShowEditModal(true); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(test.id, 'draft')}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" /> Delete
-                    </button>
-                    <button
-                      onClick={() => handlePublish(test.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <CheckCircle className="w-4 h-4" /> Publish
-                    </button>
-                  </div>
+      {/* Drafts */}
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Drafts</h3>
+        <div className="space-y-4">
+          {drafts.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <p className="text-gray-500">No drafts yet. Create your first test paper!</p>
+            </div>
+          ) : (
+            drafts.map(test => (
+              <div
+                key={test._id}
+                className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-4">
+                  <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">
+                    draft
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {test.questions?.length || 0} questions • {test.totalMarks} marks
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditAnswerKeys(test)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-4 h-4" /> Edit Answer Keys
+                  </button>
+                  <button
+                    onClick={() => handleDelete(test._id, 'draft')}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                  <button
+                    onClick={() => handlePublish(test)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" /> Publish
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
+      </div>
 
-        {/* Published Section */}
-        <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Published</h3>
-          <div className="space-y-4">
-            {published.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                <p className="text-gray-500">No published test papers yet.</p>
-              </div>
-            ) : (
-              published.map(test => (
-                <div
-                  key={test.id}
-                  className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-4">
-                    <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">published</span>
-                    <span className="text-sm text-gray-500">{test.questions?.length || 0} questions</span>
-                    <span className="text-sm text-gray-500">• {getTotalMarks(test.questions)} marks</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => { handleEdit(test); setShowEditModal(true); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(test.id, 'published')}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" /> Delete
-                    </button>
-                    {/* ✅ Navigate to TestResultsViewer */}
-                    <button
-                      onClick={() => navigate(`/classdetails/${classId}/testpapers/viewresults/${test.id}`)}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" /> View Results
-                    </button>
-                  </div>
+      {/* Published */}
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Published</h3>
+        <div className="space-y-4">
+          {published.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <p className="text-gray-500">No published test papers yet.</p>
+            </div>
+          ) : (
+            published.map(test => (
+              <div
+                key={test._id}
+                className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-4">
+                  <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    published
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {test.questions?.length || 0} questions • {test.totalMarks} marks
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleViewResults(test._id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4" /> View Results
+                  </button>
+                  <button
+                    onClick={() => handleDelete(test._id, 'published')}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      </main>
+      </div>
 
       {/* AI Generation Modal */}
       {showAIModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Generate Test Paper with AI</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                Generate Test Paper with AI
+              </h3>
               <button
-                onClick={() => { setShowAIModal(false); setSelectedNotes([]); }}
+                onClick={() => {
+                  setShowAIModal(false);
+                  setSelectedNotes([]);
+                }}
                 className="text-gray-400 hover:text-gray-600"
                 disabled={isGenerating}
               >
-                <X className="w-6 h-6" />
+                ✕
               </button>
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto">
-              <h4 className="font-semibold text-gray-900 mb-4">Select Source Notes</h4>
-              <div className="space-y-3">
-                {availableNotes.map(note => (
-                  <label
-                    key={note.id}
-                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedNotes.includes(note.id)
-                        ? 'border-purple-600 bg-purple-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedNotes.includes(note.id)}
-                      onChange={() => toggleNoteSelection(note.id)}
-                      disabled={isGenerating}
-                      className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-600"
-                    />
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-purple-600" />
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Select Source Notes
+              </h4>
+
+              {loadingNotes ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader className="w-8 h-8 text-purple-600 animate-spin" />
+                  <span className="ml-3 text-gray-600">Loading notes...</span>
+                </div>
+              ) : availableNotes.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">No notes uploaded yet</p>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Please upload notes first in the Notes tab
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {availableNotes.map(note => (
+                    <label
+                      key={note._id}
+                      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedNotes.includes(note._id)
+                          ? 'border-purple-600 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedNotes.includes(note._id)}
+                        onChange={() => toggleNoteSelection(note._id)}
+                        disabled={isGenerating}
+                        className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-600"
+                      />
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{note.title}</p>
+                          <p className="text-sm text-gray-500">
+                            Uploaded by {note.uploadedBy} •{' '}
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{note.title}</p>
-                        <p className="text-sm text-gray-500">{note.date}</p>
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="p-6 border-t border-gray-200 flex gap-3">
               <button
-                onClick={() => { setShowAIModal(false); setSelectedNotes([]); }}
+                onClick={() => {
+                  setShowAIModal(false);
+                  setSelectedNotes([]);
+                }}
                 disabled={isGenerating}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWithAI}
                 disabled={selectedNotes.length === 0 || isGenerating}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {isGenerating ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader className="w-4 h-4 animate-spin" />
                     Generating...
                   </span>
                 ) : (
-                  'Generate'
+                  `Generate Test Paper (${selectedNotes.length} notes)`
                 )}
               </button>
             </div>
@@ -324,108 +356,36 @@ const TestPapersPage = () => {
         </div>
       )}
 
-      {/* Edit Test Paper Modal */}
+      {/* Edit Answer Keys Modal */}
       {showEditModal && editingTest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Edit Test Paper</h3>
-              <button
-                onClick={() => { setShowEditModal(false); setEditingTest(null); }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+        <EditAnswerKeysModal
+          testPaper={editingTest}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingTest(null);
+          }}
+          onSave={() => {
+            setShowEditModal(false);
+            setEditingTest(null);
+            fetchTestPapers();
+          }}
+        />
+      )}
 
-            <div className="p-6 flex-1 overflow-y-auto">
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Test Paper Title</label>
-                <input
-                  type="text"
-                  value={editingTest.title}
-                  onChange={(e) => updateTestTitle(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
-                />
-              </div>
-
-              <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm font-semibold text-purple-900">
-                  Total Marks: {getTotalMarks(editingTest.questions)}
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {editingTest.questions.map((q, qIndex) => (
-                  <div key={q.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold text-gray-900">Question {qIndex + 1}</h4>
-                        <select
-                          value={q.type}
-                          onChange={(e) => updateQuestion(qIndex, 'type', e.target.value)}
-                          className="px-3 py-1 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-600"
-                        >
-                          <option value="short">Short Answer</option>
-                          <option value="long">Long Answer</option>
-                        </select>
-                      </div>
-                      {editingTest.questions.length > 1 && (
-                        <button
-                          onClick={() => removeQuestion(qIndex)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Minus className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Question</label>
-                      <textarea
-                        value={q.question}
-                        onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
-                      ></textarea>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Marks</label>
-                      <input
-                        type="number"
-                        value={q.marks}
-                        onChange={(e) => updateQuestion(qIndex, 'marks', parseInt(e.target.value) || 0)}
-                        className="w-32 px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  onClick={addQuestion}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Add Question
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => { setShowEditModal(false); setEditingTest(null); }}
-                className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateTest}
-                className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Publish Modal */}
+      {showPublishModal && publishingTest && (
+        <PublishTestModal
+          testPaper={publishingTest}
+          onClose={() => {
+            setShowPublishModal(false);
+            setPublishingTest(null);
+          }}
+          onPublished={() => {
+            setShowPublishModal(false);
+            setPublishingTest(null);
+            fetchTestPapers();
+          }}
+        />
       )}
     </div>
   );
