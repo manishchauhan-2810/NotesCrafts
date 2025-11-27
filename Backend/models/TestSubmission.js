@@ -1,3 +1,4 @@
+// Backend/models/TestSubmission.js
 import mongoose from "mongoose";
 
 const answerSchema = new mongoose.Schema({
@@ -28,7 +29,7 @@ const answerSchema = new mongoose.Schema({
   aiMarks: {
     type: Number,
     default: null,
-  }, // AI suggested marks
+  },
   aiFeedback: {
     type: String,
     default: "",
@@ -76,6 +77,11 @@ const testSubmissionSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "checked"],
     default: "pending",
+  },
+  // ⭐ NEW: Result publication flag
+  isResultPublished: {
+    type: Boolean,
+    default: false,
   },
   submittedAt: {
     type: Date,

@@ -26,15 +26,15 @@ export const generateTestPaperFromText = async (extractedText) => {
     const limitedText = extractedText.slice(0, 12000);
     
     const prompt = `
-You are an expert exam question paper generator. Generate EXACTLY 10 questions with answer keys from the following educational content.
+You are an expert exam question paper generator. Generate EXACTLY 11 questions with answer keys from the following educational content.
 
 CONTENT:
 ${limitedText}
 
 REQUIREMENTS:
-1. Generate EXACTLY 10 questions in this structure:
+1. Generate EXACTLY 11 questions in this structure:
    - 5 SHORT answer questions (2 marks each) - Answer in 2-3 lines
-   - 3 MEDIUM answer questions (5 marks each) - Answer in 5-6 lines
+   - 4 MEDIUM answer questions (5 marks each) - Answer in 5-6 lines
    - 2 LONG answer questions (10 marks each) - Answer in 10-12 lines
 
 2. Each question MUST have:

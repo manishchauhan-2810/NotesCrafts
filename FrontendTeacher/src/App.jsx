@@ -1,10 +1,11 @@
-// FrontendTeacher/src/App.jsx
+// FrontendTeacher/src/App.jsx (UPDATED)
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./Pages/Dashboard";
 import ClassDetail from "./Pages/ClassDetail";
 import TestResultsViewer from "./Pages/TestResultsViewer";
+import StudentTestResult from "./Pages/StudentTestResult"; // ⭐ NEW
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
@@ -65,12 +66,22 @@ export default function App() {
         <Route path="doubts" element={<DoubtsPage />} />
       </Route>
 
-      {/* Test Results Route */}
+      {/* ⭐ Test Results Routes (Outside nested layout) */}
       <Route
         path="/class/:classId/test-papers/results/:testId"
         element={
           <ProtectedRoute requiredRole="teacher">
             <TestResultsViewer />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ⭐ NEW: Individual Student Result Route */}
+      <Route
+        path="/class/:classId/test-papers/results/:testId/student/:studentId"
+        element={
+          <ProtectedRoute requiredRole="teacher">
+            <StudentTestResult />
           </ProtectedRoute>
         }
       />

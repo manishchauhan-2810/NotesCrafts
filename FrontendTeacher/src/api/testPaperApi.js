@@ -1,3 +1,4 @@
+// FrontendTeacher/src/api/testPaperApi.js (UPDATED)
 import axios from "axios";
 
 const BASE_URL = "http://localhost:5000/api";
@@ -47,9 +48,15 @@ export const getTestSubmissions = async (testPaperId) => {
   return res.data;
 };
 
-// Check test with AI
+// Check test with AI (BATCH PROCESSING)
 export const checkTestWithAI = async (testPaperId) => {
   const res = await axios.post(`${BASE_URL}/test-submission/check-with-ai/${testPaperId}`);
+  return res.data;
+};
+
+// ⭐ NEW: Publish results to students
+export const publishResults = async (testPaperId) => {
+  const res = await axios.post(`${BASE_URL}/test-submission/publish-results/${testPaperId}`);
   return res.data;
 };
 
@@ -58,5 +65,11 @@ export const updateMarksManually = async (submissionId, answers) => {
   const res = await axios.put(`${BASE_URL}/test-submission/update-marks/${submissionId}`, {
     answers
   });
+  return res.data;
+};
+
+// ⭐ NEW: Get single submission by ID
+export const getSubmissionById = async (submissionId) => {
+  const res = await axios.get(`${BASE_URL}/test-submission/submission/${submissionId}`);
   return res.data;
 };

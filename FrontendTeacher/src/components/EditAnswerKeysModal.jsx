@@ -46,7 +46,7 @@ export default function EditAnswerKeysModal({ testPaper, onClose, onSave }) {
   const longQuestions = getQuestionsByType('long');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">

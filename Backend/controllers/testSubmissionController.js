@@ -1,3 +1,4 @@
+// Backend/controllers/testSubmissionController.js
 import TestSubmission from "../models/TestSubmission.js";
 import TestPaper from "../models/TestPaper.js";
 import User from "../models/User.js";
@@ -76,6 +77,7 @@ export const submitTest = async (req, res) => {
       marksObtained: 0,
       percentage: 0,
       status: "pending",
+      isResultPublished: false, // ⭐ NEW: Result publication flag
     });
 
     console.log("✅ Test submitted (pending checking)");
@@ -99,7 +101,7 @@ export const submitTest = async (req, res) => {
 };
 
 /**
- * Check test answers using AI
+ * ⭐ NEW: Check test with AI - BATCH PROCESSING with rate limiting
  * POST /api/test-submission/check-with-ai/:testPaperId
  */
 export const checkTestWithAI = async (req, res) => {
@@ -122,7 +124,7 @@ export const checkTestWithAI = async (req, res) => {
       return res.status(404).json({ error: "No pending submissions found" });
     }
 
-    console.log(`📋 Checking ${submissions.length} submissions...`);
+    console.log(`📋 Found ${submissions.length} pending submissions`);
 
     const answerKeys = testPaper.questions.map((q) => ({
       questionId: q._id.toString(),
@@ -133,65 +135,103 @@ export const checkTestWithAI = async (req, res) => {
     }));
 
     let checkedCount = 0;
+    let failedCount = 0;
 
-    for (const submission of submissions) {
-      try {
-        const studentAnswers = submission.answers.map((ans) => ({
-          questionId: ans.questionId,
-          studentAnswer: ans.studentAnswer,
-        }));
+    // ⭐ BATCH PROCESSING: Process in batches of 5 to avoid rate limits
+    const BATCH_SIZE = 5;
+    const DELAY_BETWEEN_BATCHES = 2000; // 2 seconds delay between batches
 
-        // Gemini AI Check
-        const aiResults = await checkAnswersWithAI(answerKeys, studentAnswers);
+    for (let i = 0; i < submissions.length; i += BATCH_SIZE) {
+      const batch = submissions.slice(i, i + BATCH_SIZE);
+      
+      console.log(`\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(submissions.length / BATCH_SIZE)}`);
+      console.log(`   Students: ${batch.map(s => s.studentName).join(', ')}`);
 
-        let totalMarksObtained = 0;
+      // Process batch concurrently
+      const batchPromises = batch.map(async (submission) => {
+        try {
+          const studentAnswers = submission.answers.map((ans) => ({
+            questionId: ans.questionId,
+            studentAnswer: ans.studentAnswer,
+          }));
 
-        submission.answers = submission.answers.map((ans) => {
-          const aiResult = aiResults.find(
-            (r) => r.questionId === ans.questionId
-          );
-
-          if (aiResult) {
-            totalMarksObtained += aiResult.marksAwarded;
-            return {
-              ...ans,
-              aiMarks: aiResult.marksAwarded,
-              marksAwarded: aiResult.marksAwarded,
-              aiFeedback: aiResult.feedback || aiResult.reason || "",
-              checkedBy: "ai",
-            };
+          // Gemini AI Check with retry logic
+          let aiResults;
+          let retries = 3;
+          
+          while (retries > 0) {
+            try {
+              aiResults = await checkAnswersWithAI(answerKeys, studentAnswers);
+              break; // Success, exit retry loop
+            } catch (error) {
+              retries--;
+              if (retries === 0) throw error;
+              
+              console.log(`   ⚠️ Retry ${3 - retries}/3 for ${submission.studentName}`);
+              await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between retries
+            }
           }
 
-          return ans;
-        });
+          let totalMarksObtained = 0;
 
-        submission.marksObtained = totalMarksObtained;
-        submission.percentage = parseFloat(
-          ((totalMarksObtained / submission.totalMarks) * 100).toFixed(2)
-        );
-        submission.status = "checked";
-        submission.checkedAt = new Date();
+          submission.answers = submission.answers.map((ans) => {
+            const aiResult = aiResults.find(
+              (r) => r.questionId === ans.questionId
+            );
 
-        await submission.save();
-        checkedCount++;
+            if (aiResult) {
+              totalMarksObtained += aiResult.marksAwarded;
+              return {
+                ...ans,
+                aiMarks: aiResult.marksAwarded,
+                marksAwarded: aiResult.marksAwarded,
+                aiFeedback: aiResult.feedback || aiResult.reason || "",
+                checkedBy: "ai",
+              };
+            }
 
-        console.log(`✅ Checked submission for ${submission.studentName}`);
-      } catch (error) {
-        console.error(
-          `❌ Error checking submission ${submission._id}:`,
-          error
-        );
+            return ans;
+          });
+
+          submission.marksObtained = totalMarksObtained;
+          submission.percentage = parseFloat(
+            ((totalMarksObtained / submission.totalMarks) * 100).toFixed(2)
+          );
+          submission.status = "checked";
+          submission.checkedAt = new Date();
+          submission.isResultPublished = false; // ⭐ Not published yet
+
+          await submission.save();
+          checkedCount++;
+
+          console.log(`   ✅ ${submission.studentName}: ${totalMarksObtained}/${submission.totalMarks}`);
+          
+          return { success: true, studentName: submission.studentName };
+        } catch (error) {
+          failedCount++;
+          console.error(`   ❌ Failed for ${submission.studentName}:`, error.message);
+          return { success: false, studentName: submission.studentName, error: error.message };
+        }
+      });
+
+      await Promise.all(batchPromises);
+
+      // Delay between batches (except for last batch)
+      if (i + BATCH_SIZE < submissions.length) {
+        console.log(`   ⏳ Waiting ${DELAY_BETWEEN_BATCHES/1000}s before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
       }
     }
 
-    console.log(
-      `✅ AI checking completed: ${checkedCount}/${submissions.length} submissions`
-    );
+    console.log(`\n✅ AI checking completed:`);
+    console.log(`   Successfully checked: ${checkedCount}/${submissions.length}`);
+    console.log(`   Failed: ${failedCount}/${submissions.length}`);
 
     res.status(200).json({
       success: true,
-      message: `Checked ${checkedCount} submissions using AI`,
+      message: `Checked ${checkedCount} submissions using AI${failedCount > 0 ? ` (${failedCount} failed)` : ''}`,
       checkedCount,
+      failedCount,
       totalSubmissions: submissions.length,
     });
   } catch (error) {
@@ -204,7 +244,33 @@ export const checkTestWithAI = async (req, res) => {
 };
 
 /**
- * Get student's test result
+ * ⭐ NEW: Publish results to students (batch update)
+ * POST /api/test-submission/publish-results/:testPaperId
+ */
+export const publishResults = async (req, res) => {
+  try {
+    const { testPaperId } = req.params;
+
+    const result = await TestSubmission.updateMany(
+      { testPaperId, status: "checked" },
+      { $set: { isResultPublished: true } }
+    );
+
+    console.log("✅ Results published:", result.modifiedCount);
+
+    res.status(200).json({
+      success: true,
+      message: `Published results for ${result.modifiedCount} students`,
+      count: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error publishing results:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/**
+ * Get student's test result (only if published)
  * GET /api/test-submission/result/:testPaperId/:studentId
  */
 export const getTestResult = async (req, res) => {
@@ -220,12 +286,46 @@ export const getTestResult = async (req, res) => {
       return res.status(404).json({ error: "No submission found" });
     }
 
+    // ⭐ Check if result is published
+    if (!submission.isResultPublished) {
+      return res.status(403).json({
+        error: "Results not published yet",
+        status: submission.status,
+      });
+    }
+
     res.status(200).json({
       success: true,
       submission,
     });
   } catch (error) {
     console.error("Error fetching result:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/**
+ * Get single submission by ID (for teacher route)
+ * GET /api/test-submission/submission/:submissionId
+ */
+export const getSubmissionById = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+
+    const submission = await TestSubmission.findById(submissionId)
+      .populate("testPaperId", "title totalMarks questions")
+      .populate("studentId", "name email");
+
+    if (!submission) {
+      return res.status(404).json({ error: "Submission not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      submission,
+    });
+  } catch (error) {
+    console.error("Error fetching submission:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -246,6 +346,7 @@ export const checkSubmission = async (req, res) => {
     res.status(200).json({
       hasSubmitted: !!submission,
       status: submission?.status || null,
+      isResultPublished: submission?.isResultPublished || false,
       submissionId: submission?._id || null,
     });
   } catch (error) {
@@ -284,7 +385,7 @@ export const getTestSubmissions = async (req, res) => {
 export const updateMarksManually = async (req, res) => {
   try {
     const { submissionId } = req.params;
-    const { answers } = req.body; // Array of {questionId, marksAwarded, teacherFeedback}
+    const { answers } = req.body;
 
     const submission = await TestSubmission.findById(submissionId);
     if (!submission) {
@@ -316,6 +417,8 @@ export const updateMarksManually = async (req, res) => {
     );
     submission.status = "checked";
     submission.checkedAt = new Date();
+    // ⭐ Don't auto-publish after manual update
+    // submission.isResultPublished stays as is
 
     await submission.save();
 
