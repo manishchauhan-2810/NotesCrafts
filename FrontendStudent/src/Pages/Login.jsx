@@ -64,15 +64,29 @@ export default function Login() {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // Check if need to redirect to different frontend
-      const target = formData.role === "teacher" ? TEACHER_URL : STUDENT_URL;
-      const targetOrigin = new URL(target).origin;
+      // ✅ Check if need to redirect to different frontend
+      const TEACHER_URL =
+        import.meta.env.VITE_TEACHER_URL || "http://localhost:5174";
+      const STUDENT_URL =
+        import.meta.env.VITE_STUDENT_URL || "http://localhost:5173";
 
-      if (window.location.origin !== targetOrigin) {
-        window.location.replace(target);
-        return;
+      const targetUrl = formData.role === "teacher" ? TEACHER_URL : STUDENT_URL;
+
+      try {
+        const targetOrigin = new URL(targetUrl).origin;
+        const currentOrigin = window.location.origin;
+
+        if (currentOrigin !== targetOrigin) {
+          // Need to redirect to different app
+          console.log(`Redirecting to ${targetUrl}`);
+          window.location.replace(targetUrl);
+          return; // Stop here, let the redirect happen
+        }
+      } catch (urlError) {
+        console.error("URL parse error:", urlError);
       }
 
+      // Same app, just navigate to home
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Invalid email or password");
