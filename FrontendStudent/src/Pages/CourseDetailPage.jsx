@@ -1,5 +1,5 @@
 // FrontendStudent/src/Pages/CourseDetailPage.jsx
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import { useParams, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 export default function CourseDetailPage() {
@@ -7,19 +7,21 @@ export default function CourseDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get active tab from URL
-  const pathParts = location.pathname.split('/');
-  const activeTab = pathParts[pathParts.length - 1];
+  // ✅ Memoize active tab to prevent recalculation on every render
+  const activeTab = useMemo(() => {
+    const pathParts = location.pathname.split('/');
+    return pathParts[pathParts.length - 1];
+  }, [location.pathname]);
 
-  // Get class info from localStorage (if available)
-  const [classInfo] = useState(() => {
+  // ✅ Memoize classInfo to prevent re-parsing localStorage
+  const classInfo = useMemo(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     return {
       classId: id,
       studentId: user.id || user._id,
       studentName: user.name,
     };
-  });
+  }, [id]); // Only recompute when id changes
 
   const tabs = [
     { id: 'notes', label: 'Notes', path: 'notes' },
