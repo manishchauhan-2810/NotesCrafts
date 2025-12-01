@@ -1,18 +1,18 @@
-// FrontendTeacher/src/App.jsx (UPDATED)
+// FrontendTeacher/src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./Pages/Dashboard";
 import ClassDetail from "./Pages/ClassDetail";
 import TestResultsViewer from "./Pages/TestResultsViewer";
-import StudentTestResult from "./Pages/StudentTestResult"; // ⭐ NEW
+import StudentTestResult from "./Pages/StudentTestResult";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
-// Import new tab pages
 import NotesPage from "./Pages/NotesPage";
 import QuizzesPage from "./components/QuizzesPage";
 import TestPapersPage from "./components/TestPapersPage";
+import AssignmentsPage from "./components/AssignmentsPage"; // ✅ NEW
 import DoubtsPage from "./Pages/DoubtsPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -21,7 +21,7 @@ import PublicRoute from "./components/PublicRoute";
 export default function App() {
   return (
     <Routes>
-      {/* 🔓 Public Routes (accessible only when not logged in) */}
+      {/* Public Routes */}
       <Route
         path="/login"
         element={
@@ -39,7 +39,7 @@ export default function App() {
         }
       />
 
-      {/* 🔒 Protected Routes (accessible only for logged-in teachers) */}
+      {/* Protected Routes */}
       <Route
         path="/"
         element={
@@ -49,7 +49,7 @@ export default function App() {
         }
       />
 
-      {/* 🎯 Class Detail Routes - Main Layout */}
+      {/* Class Detail Routes - Main Layout */}
       <Route
         path="/class/:classId"
         element={
@@ -58,15 +58,15 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        {/* Nested Routes for Tabs */}
         <Route index element={<Navigate to="notes" replace />} />
         <Route path="notes" element={<NotesPage />} />
         <Route path="quizzes" element={<QuizzesPage />} />
         <Route path="test-papers" element={<TestPapersPage />} />
+        <Route path="assignments" element={<AssignmentsPage />} /> {/* ✅ NEW */}
         <Route path="doubts" element={<DoubtsPage />} />
       </Route>
 
-      {/* ⭐ Test Results Routes (Outside nested layout) */}
+      {/* Test Results Routes */}
       <Route
         path="/class/:classId/test-papers/results/:testId"
         element={
@@ -76,7 +76,6 @@ export default function App() {
         }
       />
 
-      {/* ⭐ NEW: Individual Student Result Route */}
       <Route
         path="/class/:classId/test-papers/results/:testId/student/:studentId"
         element={
@@ -86,7 +85,7 @@ export default function App() {
         }
       />
 
-      {/* 🚧 Redirect any unknown route */}
+      {/* Redirect unknown routes */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

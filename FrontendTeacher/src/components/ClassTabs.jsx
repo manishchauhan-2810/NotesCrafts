@@ -8,7 +8,8 @@ const ClassTabs = ({ activeTab, classId }) => {
   const tabs = [
     { id: 'notes', label: 'Notes', path: 'notes' },
     { id: 'quizzes', label: 'Quizzes', path: 'quizzes' },
-    { id: 'test-papers', label: 'Test papers', path: 'test-papers' },
+    { id: 'test-papers', label: 'Test Papers', path: 'test-papers' },
+    { id: 'assignments', label: 'Assignments', path: 'assignments' }, // ✅ NEW
     { id: 'doubts', label: 'Doubts', path: 'doubts', badge: 1 },
   ];
 

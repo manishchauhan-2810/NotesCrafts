@@ -15,8 +15,10 @@ import quizRoutes from "./routes/quizRoutes.js";
 import questionBankRoutes from "./routes/questionBankRoutes.js";
 import doubtRoutes from "./routes/doubtRoutes.js";
 import quizSubmissionRoutes from "./routes/quizSubmissionRoutes.js";
-import testPaperRoutes from "./routes/testPaperRoutes.js"; // ✅ NEW
-import testSubmissionRoutes from "./routes/testSubmissionRoutes.js"; // ✅ NEW
+import testPaperRoutes from "./routes/testPaperRoutes.js";
+import testSubmissionRoutes from "./routes/testSubmissionRoutes.js";
+import assignmentRoutes from "./routes/assignmentRoutes.js"; // ✅ NEW
+import assignmentSubmissionRoutes from "./routes/assignmentSubmissionRoutes.js"; // ✅ NEW
 
 const app = express();
 
@@ -71,8 +73,10 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/question-bank", questionBankRoutes);
 app.use("/api/doubts", doubtRoutes);
 app.use("/api/quiz-submission", quizSubmissionRoutes);
-app.use("/api/test-paper", testPaperRoutes); // ✅ NEW
-app.use("/api/test-submission", testSubmissionRoutes); // ✅ NEW
+app.use("/api/test-paper", testPaperRoutes);
+app.use("/api/test-submission", testSubmissionRoutes);
+app.use("/api/assignment", assignmentRoutes); // ✅ NEW
+app.use("/api/assignment-submission", assignmentSubmissionRoutes); // ✅ NEW
 
 // Health check
 app.get("/", (req, res) => {
