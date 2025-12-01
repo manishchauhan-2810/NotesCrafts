@@ -26,7 +26,7 @@ export default function CourseDetailPage() {
   const tabs = [
     { id: 'notes', label: 'Notes', path: 'notes' },
     { id: 'quiz', label: 'Quiz', path: 'quiz' },
-    { id: 'assignment', label: 'Assignment', path: 'assignment' },
+    { id: 'assignment', label: 'Assignment', path: 'assignment' }, // ✅ NEW TAB
     { id: 'test', label: 'Test Paper', path: 'test' },
   ];
 

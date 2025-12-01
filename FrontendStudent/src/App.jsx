@@ -14,8 +14,8 @@ import PublicRoute from "./components/PublicRoute";
 
 // Import existing tab components
 import Quiz from "./Pages/Quiz";
-import NotesAndAssignments from "./Pages/NotesAndAssignments";
 import TestPapers from "./Pages/TestPapers";
+import Assignments from "./Pages/Assignments"; // ✅ NEW IMPORT
 
 function StudentLayout() {
   return (
@@ -66,7 +66,7 @@ export default function App() {
           {/* Tab Routes */}
           <Route path="notes" element={<StudentNotesPage />} />
           <Route path="quiz" element={<Quiz />} />
-          <Route path="assignment" element={<NotesAndAssignments />} />
+          <Route path="assignment" element={<Assignments />} /> {/* ✅ NEW ROUTE */}
           <Route path="test" element={<TestPapers />} />
         </Route>
       </Route>
