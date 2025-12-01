@@ -109,3 +109,25 @@ export const getClassrooms = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching classrooms" });
   }
 };
+
+export const getClassroomById = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    const classroom = await Classroom.findById(classId)
+      .populate('students', 'name email createdAt') // Populate student details
+      .populate('teacherId', 'name email');
+
+    if (!classroom) {
+      return res.status(404).json({ error: "Classroom not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      classroom
+    });
+  } catch (error) {
+    console.error("Error fetching classroom:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};

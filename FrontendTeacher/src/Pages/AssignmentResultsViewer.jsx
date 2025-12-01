@@ -1,0 +1,376 @@
+// FrontendTeacher/src/Pages/AssignmentResultsViewer.jsx
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ChevronLeft, User, Clock, CheckCircle, AlertTriangle, 
+  Sparkles, FileText, Loader, RefreshCw
+} from 'lucide-react';
+import { 
+  getAssignmentSubmissions, 
+  checkAssignmentWithAI, 
+  getAssignmentById,
+  publishResults
+} from '../api/assignmentApi';
+
+const AssignmentResultsViewer = () => {
+  const { classId, assignmentId } = useParams();
+  const navigate = useNavigate();
+
+  const [assignment, setAssignment] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+  const [isAIChecking, setIsAIChecking] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, [assignmentId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      const assignmentResponse = await getAssignmentById(assignmentId);
+      setAssignment(assignmentResponse);
+
+      const submissionsResponse = await getAssignmentSubmissions(assignmentId);
+      setSubmissions(submissionsResponse.submissions || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      alert('Failed to load assignment results');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAIChecking = async () => {
+    if (!confirm('This will check all pending submissions using AI. Continue?')) return;
+
+    try {
+      setIsAIChecking(true);
+
+      const response = await checkAssignmentWithAI(assignmentId);
+
+      alert(
+        `✅ AI Checking Complete!\n\n` +
+        `✓ Checked: ${response.checkedCount}/${response.totalSubmissions}\n` +
+        `${response.failedCount > 0 ? `✗ Failed: ${response.failedCount}\n` : ''}` +
+        `\nNote: Results are NOT visible to students yet.\n` +
+        `Click "Publish Results" to make them visible.`
+      );
+
+      await fetchData();
+    } catch (error) {
+      console.error('AI checking error:', error);
+      alert(error.response?.data?.error || 'Failed to check with AI');
+    } finally {
+      setIsAIChecking(false);
+    }
+  };
+
+  const handlePublishResults = async () => {
+    const checkedCount = submissions.filter(s => s.status === 'checked').length;
+    
+    if (checkedCount === 0) {
+      alert('No checked submissions to publish. Please check submissions first.');
+      return;
+    }
+
+    if (!confirm(`This will publish results for ${checkedCount} students. They will be able to see their marks. Continue?`)) {
+      return;
+    }
+
+    try {
+      setIsPublishing(true);
+
+      const response = await publishResults(assignmentId);
+
+      alert(`✅ Results Published!\n\n${response.count} students can now view their results.`);
+
+      await fetchData();
+    } catch (error) {
+      console.error('Publish error:', error);
+      alert('Failed to publish results');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleViewStudent = (submission) => {
+    navigate(`/class/${classId}/assignments/results/${assignmentId}/student/${submission.studentId._id || submission.studentId}`, {
+      state: { submissionId: submission._id }
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading assignment results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!assignment) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-700 font-semibold">Assignment not found</p>
+          <button
+            onClick={() => navigate(`/class/${classId}/assignments`)}
+            className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition cursor-pointer"
+          >
+            Back to Assignments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const pendingCount = submissions.filter(s => s.status === 'pending').length;
+  const checkedCount = submissions.filter(s => s.status === 'checked').length;
+  const publishedCount = submissions.filter(s => s.isResultPublished).length;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate(`/class/${classId}/assignments`)}
+            className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4 cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Back to Assignments
+          </button>
+          
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{assignment.title}</h1>
+          <p className="text-gray-600">{assignment.totalMarks} marks • {submissions.length} submissions</p>
+        </div>
+
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total</p>
+                <p className="text-3xl font-bold text-gray-900">{submissions.length}</p>
+              </div>
+              <FileText className="w-10 h-10 text-gray-300" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Pending</p>
+                <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
+              </div>
+              <Clock className="w-10 h-10 text-yellow-300" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Checked</p>
+                <p className="text-3xl font-bold text-green-600">{checkedCount}</p>
+              </div>
+              <CheckCircle className="w-10 h-10 text-green-300" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Published</p>
+                <p className="text-3xl font-bold text-purple-600">{publishedCount}</p>
+              </div>
+              <RefreshCw className="w-10 h-10 text-purple-300" />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-6">
+          {pendingCount > 0 && (
+            <button
+              onClick={handleAIChecking}
+              disabled={isAIChecking}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {isAIChecking ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Checking with AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Check All with AI ({pendingCount})
+                </>
+              )}
+            </button>
+          )}
+
+          {checkedCount > 0 && (
+            <button
+              onClick={handlePublishResults}
+              disabled={isPublishing}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {isPublishing ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5" />
+                  Publish Results ({checkedCount - publishedCount} new)
+                </>
+              )}
+            </button>
+          )}
+
+          <button
+            onClick={fetchData}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-5 h-5" />
+            Refresh
+          </button>
+        </div>
+
+        {/* Info Message */}
+        {checkedCount > publishedCount && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-900 mb-1">
+                  Results Not Published Yet
+                </p>
+                <p className="text-sm text-yellow-800">
+                  {checkedCount - publishedCount} checked submission(s) are ready but not visible to students. 
+                  Click "Publish Results" to make them available.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Submissions Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Student</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Published</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Score</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Percentage</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Submitted</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {submissions.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No submissions yet</p>
+                    </td>
+                  </tr>
+                ) : (
+                  submissions.map((submission) => (
+                    <tr key={submission._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{submission.studentName}</p>
+                            <p className="text-sm text-gray-500">{submission.studentId?.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                          submission.status === 'checked'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {submission.status === 'checked' ? (
+                            <><CheckCircle className="w-3 h-3" /> Checked</>
+                          ) : (
+                            <><Clock className="w-3 h-3" /> Pending</>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {submission.isResultPublished ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                            <RefreshCw className="w-3 h-3" /> Published
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {submission.status === 'checked' ? (
+                          <span className="font-semibold text-gray-900">
+                            {submission.marksObtained}/{submission.totalMarks}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {submission.status === 'checked' ? (
+                          <span className={`font-semibold ${
+                            submission.percentage >= 60 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {submission.percentage}%
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">
+                          {new Date(submission.submittedAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleViewStudent(submission)}
+                          className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AssignmentResultsViewer;

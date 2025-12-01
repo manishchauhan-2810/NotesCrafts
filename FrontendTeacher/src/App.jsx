@@ -6,13 +6,16 @@ import Dashboard from "./Pages/Dashboard";
 import ClassDetail from "./Pages/ClassDetail";
 import TestResultsViewer from "./Pages/TestResultsViewer";
 import StudentTestResult from "./Pages/StudentTestResult";
+import AssignmentResultsViewer from "./Pages/AssignmentResultsViewer";
+import StudentAssignmentResult from "./Pages/StudentAssignmentResult";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 
 import NotesPage from "./Pages/NotesPage";
 import QuizzesPage from "./components/QuizzesPage";
 import TestPapersPage from "./components/TestPapersPage";
-import AssignmentsPage from "./components/AssignmentsPage"; // ✅ NEW
+import AssignmentsPage from "./components/AssignmentsPage";
+import StudentsPage from "./Pages/StudentsPage"; // ✅ NEW
 import DoubtsPage from "./Pages/DoubtsPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -62,7 +65,8 @@ export default function App() {
         <Route path="notes" element={<NotesPage />} />
         <Route path="quizzes" element={<QuizzesPage />} />
         <Route path="test-papers" element={<TestPapersPage />} />
-        <Route path="assignments" element={<AssignmentsPage />} /> {/* ✅ NEW */}
+        <Route path="assignments" element={<AssignmentsPage />} />
+        <Route path="students" element={<StudentsPage />} /> {/* ✅ NEW */}
         <Route path="doubts" element={<DoubtsPage />} />
       </Route>
 
@@ -81,6 +85,25 @@ export default function App() {
         element={
           <ProtectedRoute requiredRole="teacher">
             <StudentTestResult />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Assignment Results Routes */}
+      <Route
+        path="/class/:classId/assignments/results/:assignmentId"
+        element={
+          <ProtectedRoute requiredRole="teacher">
+            <AssignmentResultsViewer />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/class/:classId/assignments/results/:assignmentId/student/:studentId"
+        element={
+          <ProtectedRoute requiredRole="teacher">
+            <StudentAssignmentResult />
           </ProtectedRoute>
         }
       />

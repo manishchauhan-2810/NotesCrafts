@@ -24,7 +24,7 @@ const ClassDetail = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
     // Only return valid tab names
-    const validTabs = ['notes', 'quizzes', 'test-papers', 'assignments', 'doubts'];
+    const validTabs = ['notes', 'quizzes', 'test-papers', 'assignments', 'students', 'doubts'];
     return validTabs.includes(lastPart) ? lastPart : 'notes';
   }, [location.pathname]);
 

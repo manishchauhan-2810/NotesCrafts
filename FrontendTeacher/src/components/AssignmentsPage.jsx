@@ -1,6 +1,6 @@
 // FrontendTeacher/src/components/AssignmentsPage.jsx
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Sparkles,
   Pencil,
@@ -9,6 +9,7 @@ import {
   FileText,
   Loader,
   X,
+  Eye,
 } from "lucide-react";
 import {
   getAssignmentsByClassroom,
@@ -22,6 +23,7 @@ import EditAssignmentModal from "./EditAssignmentModal";
 
 const AssignmentsPage = () => {
   const { classId } = useParams();
+  const navigate = useNavigate(); // ✅ ADD THIS LINE
 
   const [drafts, setDrafts] = useState([]);
   const [published, setPublished] = useState([]);
@@ -178,10 +180,8 @@ const AssignmentsPage = () => {
       {/* ------------------- DRAFT ASSIGNMENTS ------------------- */}
       <div>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-2 h-8 bg-yellow-500 rounded-full"></div>
-          <h3 className="text-xl font-bold text-gray-900">
-            Draft Assignments
-          </h3>
+          <div className="w-2 h-4 bg-yellow-500 rounded-full"></div>
+          <h3 className="text-xl font-bold text-gray-900">Draft Assignments</h3>
           <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full font-semibold">
             {drafts.length}
           </span>
@@ -253,9 +253,7 @@ const AssignmentsPage = () => {
                     </button>
 
                     <button
-                      onClick={() =>
-                        handleDelete(assignment._id, "draft")
-                      }
+                      onClick={() => handleDelete(assignment._id, "draft")}
                       className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -358,13 +356,25 @@ const AssignmentsPage = () => {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
+                    {/* ✅ NEW: View Results Button */}
                     <button
                       onClick={() =>
-                        handleDelete(assignment._id, "published")
+                        navigate(
+                          `/class/${classId}/assignments/results/${assignment._id}`
+                        )
                       }
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">View Results</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(assignment._id, "published")}
                       className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Delete</span>
                     </button>
                   </div>
                 </div>

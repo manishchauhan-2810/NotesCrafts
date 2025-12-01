@@ -9,7 +9,8 @@ const ClassTabs = ({ activeTab, classId }) => {
     { id: 'notes', label: 'Notes', path: 'notes' },
     { id: 'quizzes', label: 'Quizzes', path: 'quizzes' },
     { id: 'test-papers', label: 'Test Papers', path: 'test-papers' },
-    { id: 'assignments', label: 'Assignments', path: 'assignments' }, // ✅ NEW
+    { id: 'assignments', label: 'Assignments', path: 'assignments' },
+    { id: 'students', label: 'Students', path: 'students' }, // ✅ NEW
     { id: 'doubts', label: 'Doubts', path: 'doubts', badge: 1 },
   ];
 

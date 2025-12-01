@@ -1,7 +1,8 @@
+// FrontendTeacher/src/api/classroomApi.js
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/classroom", // Backend classroom routes
+  baseURL: "http://localhost:5000/api/classroom",
 });
 
 // ✅ Create new classroom
@@ -33,6 +34,17 @@ export const getClassrooms = async (userId, role) => {
     return response.data.classrooms;
   } catch (error) {
     console.error("Error fetching classrooms:", error);
+    throw error;
+  }
+};
+
+// ✅ NEW: Get single classroom details with populated students
+export const getClassroomDetails = async (classId) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/classroom/${classId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching classroom details:", error);
     throw error;
   }
 };
