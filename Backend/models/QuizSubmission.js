@@ -8,7 +8,8 @@ const answerSchema = new mongoose.Schema({
   },
   selectedAnswer: {
     type: String,
-    required: true
+    required: false, // ✅ Changed to false - allow empty answers
+    default: '' // ✅ Default empty string for unanswered
   },
   correctAnswer: {
     type: String,
@@ -16,7 +17,8 @@ const answerSchema = new mongoose.Schema({
   },
   isCorrect: {
     type: Boolean,
-    required: true
+    required: true,
+    default: false
   }
 });
 
@@ -38,7 +40,8 @@ const quizSubmissionSchema = new mongoose.Schema({
   answers: [answerSchema],
   score: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   totalQuestions: {
     type: Number,
@@ -46,7 +49,8 @@ const quizSubmissionSchema = new mongoose.Schema({
   },
   percentage: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   submittedAt: {
     type: Date,

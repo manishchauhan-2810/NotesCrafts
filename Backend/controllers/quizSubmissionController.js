@@ -41,35 +41,40 @@ export const submitQuiz = async (req, res) => {
       });
     }
 
-    // Check if quiz is still active (time-based)
-    if (quiz.endTime && new Date() > new Date(quiz.endTime)) {
-      return res.status(400).json({ 
-        error: "Quiz time has expired" 
-      });
-    }
+    // ✅ REMOVED: Time expiry check - allow submission anytime
+    // Students can submit even after deadline (for partial/auto-submit cases)
 
-    // Auto-grade answers
+    // Auto-grade answers (handle unanswered questions)
     let correctCount = 0;
     const gradedAnswers = answers.map(studentAnswer => {
       const question = quiz.questions.find(q => q._id.toString() === studentAnswer.questionId);
       
       if (!question) {
-        throw new Error(`Question not found: ${studentAnswer.questionId}`);
+        console.warn(`⚠️ Question not found: ${studentAnswer.questionId}`);
+        return {
+          questionId: studentAnswer.questionId,
+          selectedAnswer: studentAnswer.selectedAnswer || '',
+          correctAnswer: 'N/A',
+          isCorrect: false
+        };
       }
 
-      const isCorrect = studentAnswer.selectedAnswer === question.correctAnswer;
+      // ✅ Handle empty/unanswered questions (selectedAnswer can be empty string)
+      const selectedAnswer = studentAnswer.selectedAnswer || '';
+      const isCorrect = selectedAnswer !== '' && selectedAnswer === question.correctAnswer;
+      
       if (isCorrect) correctCount++;
 
       return {
         questionId: studentAnswer.questionId,
-        selectedAnswer: studentAnswer.selectedAnswer,
+        selectedAnswer: selectedAnswer,
         correctAnswer: question.correctAnswer,
         isCorrect
       };
     });
 
     const totalQuestions = quiz.questions.length;
-    const percentage = ((correctCount / totalQuestions) * 100).toFixed(2);
+    const percentage = totalQuestions > 0 ? ((correctCount / totalQuestions) * 100).toFixed(2) : 0;
 
     // Save submission
     const submission = await QuizSubmission.create({
@@ -85,7 +90,8 @@ export const submitQuiz = async (req, res) => {
 
     console.log("✅ Quiz graded and saved:", {
       score: `${correctCount}/${totalQuestions}`,
-      percentage: `${percentage}%`
+      percentage: `${percentage}%`,
+      answeredCount: answers.filter(a => a.selectedAnswer && a.selectedAnswer !== '').length
     });
 
     res.status(201).json({
