@@ -61,7 +61,7 @@ export const submitAssignment = async (req, res) => {
       return {
         questionId: studentAnswer.questionId,
         question: question.question,
-        studentAnswer: studentAnswer.answer,
+        studentAnswer: studentAnswer.answer || "",
         answerKey: question.answerKey,
         marks: question.marks,
         marksAwarded: 0,

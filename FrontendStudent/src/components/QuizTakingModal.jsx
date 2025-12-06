@@ -1,6 +1,9 @@
+// FrontendStudent/src/components/QuizTakingModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Clock, AlertTriangle, CheckCircle, Loader, Shield } from 'lucide-react';
 import { submitQuiz } from '../api/quizApi';
+import { useFullScreenProctor } from '../hooks/useFullScreenProctor';
+import ViolationAlertModal from './ViolationAlertModal';
 
 export default function QuizTakingModal({ quiz, studentId, studentName, onClose, onSubmit }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -8,32 +11,27 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
   const [timeLeft, setTimeLeft] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // 🔒 ANTI-CHEAT STATE
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const [showViolationAlert, setShowViolationAlert] = useState(false);
-  const [violationMessage, setViolationMessage] = useState('');
-  
   const timerRef = useRef(null);
-  const modalRef = useRef(null);
-  const violationInProgressRef = useRef(false);
-  const lastViolationTimeRef = useRef(0);
-  const violationsRef = useRef([]);
   const answersRef = useRef({});
+
+  // ==================== FULL-SCREEN PROCTORING ====================
+  const {
+    isFullScreen,
+    showViolationAlert,
+    violationMessage,
+    violations,
+    exitFullScreen,
+    handleViolationAlertOk,
+    setIsSubmitting: setProctorSubmitting
+  } = useFullScreenProctor({
+    enabled: true,
+    maxViolations: 2,
+    onAutoSubmit: (reason) => handleAutoSubmit(reason)
+  });
 
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
-
-  // ==================== FULL-SCREEN SETUP ====================
-  useEffect(() => {
-    enterFullScreen();
-    setupAntiCheatListeners();
-    
-    return () => {
-      cleanupAntiCheatListeners();
-      exitFullScreen();
-    };
-  }, []);
 
   // ==================== TIMER SETUP ====================
   useEffect(() => {
@@ -65,153 +63,9 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
     };
   }, [timeLeft]);
 
-  // ==================== FULL-SCREEN FUNCTIONS ====================
-  const enterFullScreen = async () => {
-    try {
-      const element = document.documentElement;
-      
-      if (element.requestFullscreen) {
-        await element.requestFullscreen();
-      } else if (element.webkitRequestFullscreen) {
-        await element.webkitRequestFullscreen();
-      } else if (element.mozRequestFullScreen) {
-        await element.mozRequestFullScreen();
-      } else if (element.msRequestFullscreen) {
-        await element.msRequestFullscreen();
-      }
-      
-      setIsFullScreen(true);
-    } catch (error) {
-      console.error('Failed to enter full-screen:', error);
-    }
-  };
-
-  const exitFullScreen = () => {
-    try {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-    } catch (error) {
-      console.error('Failed to exit full-screen:', error);
-    }
-  };
-
-  // ==================== ANTI-CHEAT LISTENERS ====================
-  const setupAntiCheatListeners = () => {
-    document.addEventListener('fullscreenchange', handleFullScreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullScreenChange);
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('contextmenu', handleContextMenu);
-  };
-
-  const cleanupAntiCheatListeners = () => {
-    document.removeEventListener('fullscreenchange', handleFullScreenChange);
-    document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-    document.removeEventListener('keydown', handleKeyDown);
-    document.removeEventListener('contextmenu', handleContextMenu);
-  };
-
-  // ==================== VIOLATION HANDLERS ====================
-  const handleFullScreenChange = () => {
-    const isCurrentlyFullScreen = !!(
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement
-    );
-
-    setIsFullScreen(isCurrentlyFullScreen);
-
-    if (!isCurrentlyFullScreen && !isSubmitting && !violationInProgressRef.current && !showViolationAlert) {
-      recordViolation('Exited full-screen mode');
-    }
-  };
-
-  const handleVisibilityChange = () => {
-    if (document.hidden && !isSubmitting && !violationInProgressRef.current && !showViolationAlert) {
-      recordViolation('Switched tab/window');
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape' && !isSubmitting && !violationInProgressRef.current && !showViolationAlert) {
-      e.preventDefault();
-      recordViolation('Pressed ESC key');
-    }
-    
-    if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a', 'p'].includes(e.key.toLowerCase())) {
-      e.preventDefault();
-    }
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-  };
-
-  // ==================== VIOLATION RECORDING ====================
-  const recordViolation = (reason) => {
-    const now = Date.now();
-    if (now - lastViolationTimeRef.current < 2000) {
-      return;
-    }
-
-    if (violationInProgressRef.current) {
-      return;
-    }
-
-    violationInProgressRef.current = true;
-    lastViolationTimeRef.current = now;
-
-    const newViolation = {
-      timestamp: new Date().toISOString(),
-      reason,
-      questionNumber: currentQuestion + 1
-    };
-
-    violationsRef.current.push(newViolation);
-    const currentCount = violationsRef.current.length;
-    
-    if (currentCount >= 2) {
-      setViolationMessage(`🚨 FINAL WARNING!\n\n2nd Violation: ${reason}\n\nYour quiz will be auto-submitted now.`);
-      setShowViolationAlert(true);
-      
-      setTimeout(() => {
-        setShowViolationAlert(false);
-        handleAutoSubmit(`Multiple Violations (${currentCount} total)`);
-      }, 2000);
-    } else {
-      setViolationMessage(`⚠️ WARNING ${currentCount}/2\n\nViolation: ${reason}\n\nPlease stay in full-screen mode!\n\nOne more violation = auto-submit.`);
-      setShowViolationAlert(true);
-    }
-  };
-
-  const handleViolationAlertOk = () => {
-    setShowViolationAlert(false);
-    violationInProgressRef.current = false;
-    
-    setTimeout(() => {
-      enterFullScreen();
-    }, 100);
-  };
-
   // ==================== SUBMIT HANDLERS ====================
   const handleAutoSubmit = async (reason) => {
     if (isSubmitting) return;
-    
-    violationInProgressRef.current = false;
     await handleSubmitQuiz(true, reason);
   };
 
@@ -224,6 +78,7 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
       if (isSubmitting) return;
 
       setIsSubmitting(true);
+      setProctorSubmitting(true);
       
       if (timerRef.current) clearInterval(timerRef.current);
 
@@ -235,7 +90,7 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
       }));
 
       const answeredCount = Object.keys(currentAnswers).length;
-      const violationsCount = violationsRef.current.length;
+      const violationsCount = violations.length;
 
       const response = await submitQuiz(quiz._id, studentId, answersArray);
 
@@ -260,7 +115,7 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
       alert(`❌ Error: ${errorMsg}`);
       
       setIsSubmitting(false);
-      violationInProgressRef.current = false;
+      setProctorSubmitting(false);
     }
   };
 
@@ -306,7 +161,7 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
 
   // ==================== RENDER ====================
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50" ref={modalRef}>
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
       <div className="bg-white w-screen h-screen flex flex-col">
         {/* HEADER */}
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
@@ -321,9 +176,9 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
               </div>
             </div>
             
-            {violationsRef.current.length > 0 && (
+            {violations.length > 0 && (
               <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
-                ⚠️ {violationsRef.current.length}/2 Violation{violationsRef.current.length > 1 ? 's' : ''}
+                ⚠️ {violations.length}/2 Violation{violations.length > 1 ? 's' : ''}
               </div>
             )}
           </div>
@@ -451,35 +306,13 @@ export default function QuizTakingModal({ quiz, studentId, studentName, onClose,
       </div>
 
       {/* VIOLATION ALERT MODAL */}
-      {showViolationAlert && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-12 h-12 text-red-600" />
-              </div>
-              
-              <div className="whitespace-pre-line text-lg text-gray-800 mb-6 font-medium">
-                {violationMessage}
-              </div>
-
-              {violationsRef.current.length < 2 ? (
-                <button
-                  onClick={handleViolationAlertOk}
-                  className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors text-lg cursor-pointer"
-                >
-                  OK - Return to Full Screen
-                </button>
-              ) : (
-                <div className="flex items-center justify-center gap-2 text-red-600">
-                  <Loader className="w-6 h-6 animate-spin" />
-                  <span className="font-semibold">Submitting quiz...</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ViolationAlertModal
+        show={showViolationAlert}
+        message={violationMessage}
+        violationCount={violations.length}
+        maxViolations={2}
+        onOk={handleViolationAlertOk}
+      />
     </div>
   );
 }

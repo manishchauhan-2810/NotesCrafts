@@ -1,19 +1,46 @@
-// FrontendStudent/src/components/TakeAssignmentModal.jsx
-import React, { useState } from 'react';
-import { X, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { AlertTriangle, CheckCircle, Loader, Shield } from 'lucide-react';
 import { submitAssignment } from '../api/assignmentApi';
+import { useFullScreenProctor } from '../hooks/useFullScreenProctor';
+import ViolationAlertModal from './ViolationAlertModal';
 
 export default function TakeAssignmentModal({ assignment, studentId, studentName, onClose, onSubmit }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  
+  const answersRef = useRef({});
 
+  // ==================== FULL-SCREEN PROCTORING ====================
+  const {
+    isFullScreen,
+    showViolationAlert,
+    violationMessage,
+    violations,
+    exitFullScreen,
+    handleViolationAlertOk,
+    setIsSubmitting: setProctorSubmitting
+  } = useFullScreenProctor({
+    enabled: true,
+    maxViolations: 2,
+    onAutoSubmit: (reason) => handleAutoSubmit(reason)
+  });
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  // ==================== ANSWER HANDLING ====================
   const handleAnswerChange = (questionId, answer) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+    setAnswers(prev => {
+      const updated = {
+        ...prev,
+        [questionId]: answer
+      };
+      answersRef.current = updated;
+      return updated;
+    });
   };
 
   const handleNext = () => {
@@ -28,68 +55,100 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
     }
   };
 
+  // ==================== SUBMIT HANDLERS ====================
+  const handleAutoSubmit = async (reason) => {
+    if (isSubmitting) return;
+    console.log('⏰ Auto-submitting assignment:', reason);
+    await handleSubmitAssignment(true, reason);
+  };
+
   const handleSubmitClick = () => {
     const unanswered = assignment.questions.length - Object.keys(answers).length;
     if (unanswered > 0) {
       setShowConfirmation(true);
     } else {
-      handleSubmitAssignment();
+      handleSubmitAssignment(false);
     }
   };
 
-  const handleSubmitAssignment = async () => {
+  const handleSubmitAssignment = async (autoSubmit = false, reason = '') => {
     try {
+      if (isSubmitting) return;
+
       setIsSubmitting(true);
+      setProctorSubmitting(true);
+
+      const currentAnswers = answersRef.current;
 
       const answersArray = assignment.questions.map(q => ({
         questionId: q._id,
-        answer: answers[q._id] || ''
+        answer: currentAnswers[q._id] || ''
       }));
+
+      const answeredCount = Object.keys(currentAnswers).length;
+      const violationsCount = violations.length;
 
       console.log('📤 Submitting assignment:', { assignmentId: assignment._id, studentId });
 
       await submitAssignment(assignment._id, studentId, answersArray);
 
-      alert('✅ Assignment Submitted Successfully!\n\nYour answers have been submitted. Results will be available after evaluation.');
+      exitFullScreen();
+
+      if (autoSubmit) {
+        alert(
+          `🚨 AUTO-SUBMITTED!\n\n` +
+          `Reason: ${reason}\n` +
+          `Violations: ${violationsCount}\n` +
+          `Answered: ${answeredCount}/${assignment.questions.length}\n\n` +
+          `Your assignment has been submitted. Results will be available after evaluation.`
+        );
+      } else {
+        alert('✅ Assignment Submitted Successfully!\n\nYour answers have been submitted. Results will be available after evaluation.');
+      }
 
       onSubmit();
     } catch (error) {
       console.error('❌ Submit error:', error);
+      exitFullScreen();
       alert(error.response?.data?.error || 'Failed to submit assignment. Please try again.');
-    } finally {
+      
       setIsSubmitting(false);
+      setProctorSubmitting(false);
       setShowConfirmation(false);
     }
   };
 
-  const getAnsweredCount = () => {
-    return Object.keys(answers).length;
-  };
+  const getAnsweredCount = () => Object.keys(answers).length;
 
   const question = assignment.questions[currentQuestion];
 
+  // ==================== RENDER ====================
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+      <div className="bg-white w-screen h-screen flex flex-col">
+        {/* HEADER */}
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
-              {assignment.description && (
-                <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
-              )}
+            <div className="flex items-center gap-3">
+              <Shield className={`w-6 h-6 ${isFullScreen ? 'text-green-600' : 'text-red-600'}`} />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
+                {assignment.description && (
+                  <p className="text-xs text-gray-600 mt-1">{assignment.description}</p>
+                )}
+                <p className="text-xs text-gray-600 mt-1">
+                  🔒 Protected Mode {!isFullScreen && '(Full-screen exited)'}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
-            >
-              <X className="w-6 h-6 cursor-pointer" />
-            </button>
+            
+            {violations.length > 0 && (
+              <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
+                ⚠️ {violations.length}/2 Violation{violations.length > 1 ? 's' : ''}
+              </div>
+            )}
           </div>
 
-          {/* Progress Bar */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">
               Question {currentQuestion + 1} of {assignment.questions.length}
@@ -114,7 +173,7 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
           </div>
         </div>
 
-        {/* Question Content */}
+        {/* QUESTION CONTENT */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -136,7 +195,10 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
                 value={answers[question._id] || ''}
                 onChange={(e) => handleAnswerChange(question._id, e.target.value)}
                 placeholder="Write your answer here... Be detailed and comprehensive."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none"
+                disabled={showViolationAlert}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none ${
+                  showViolationAlert ? 'cursor-not-allowed opacity-50' : ''
+                }`}
                 rows={12}
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -145,7 +207,6 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
             </div>
           </div>
 
-          {/* Answer Status */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">
@@ -161,12 +222,12 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
           </div>
         </div>
 
-        {/* Footer Navigation */}
-        <div className="p-6 border-t border-gray-200">
+        {/* FOOTER */}
+        <div className="p-6 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <button
               onClick={handlePrevious}
-              disabled={currentQuestion === 0 || isSubmitting}
+              disabled={currentQuestion === 0 || isSubmitting || showViolationAlert}
               className="px-6 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               Previous
@@ -175,7 +236,7 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
             {currentQuestion < assignment.questions.length - 1 ? (
               <button
                 onClick={handleNext}
-                disabled={isSubmitting}
+                disabled={isSubmitting || showViolationAlert}
                 className="px-6 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors cursor-pointer"
               >
                 Next
@@ -183,7 +244,7 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
             ) : (
               <button
                 onClick={handleSubmitClick}
-                disabled={isSubmitting}
+                disabled={isSubmitting || showViolationAlert}
                 className="px-8 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
@@ -203,9 +264,18 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* VIOLATION ALERT MODAL */}
+      <ViolationAlertModal
+        show={showViolationAlert}
+        message={violationMessage}
+        violationCount={violations.length}
+        maxViolations={2}
+        onOk={handleViolationAlertOk}
+      />
+
+      {/* CONFIRMATION MODAL */}
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60]">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-start gap-4 mb-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -230,7 +300,7 @@ export default function TakeAssignmentModal({ assignment, studentId, studentName
                 Go Back
               </button>
               <button
-                onClick={handleSubmitAssignment}
+                onClick={() => handleSubmitAssignment(false)}
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
               >

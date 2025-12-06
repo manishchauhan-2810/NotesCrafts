@@ -11,7 +11,8 @@ const answerSchema = new mongoose.Schema({
   },
   studentAnswer: {
     type: String,
-    required: true,
+    default: "",    // ✅ allow empty answer
+    required: false,
   },
   answerKey: {
     type: String,
@@ -91,6 +92,9 @@ const assignmentSubmissionSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-assignmentSubmissionSchema.index({ assignmentId: 1, studentId: 1 }, { unique: true });
+assignmentSubmissionSchema.index(
+  { assignmentId: 1, studentId: 1 },
+  { unique: true }
+);
 
-export default mongoose.model("AssignmentSubmignment", assignmentSubmissionSchema);
+export default mongoose.model("AssignmentSubmission", assignmentSubmissionSchema);

@@ -42,10 +42,8 @@ export const submitTest = async (req, res) => {
       });
     }
 
-    // Check test timing
-    if (testPaper.endTime && new Date() > new Date(testPaper.endTime)) {
-      return res.status(400).json({ error: "Test time has expired" });
-    }
+    // ✅ REMOVED: Time check - allow submission even after deadline (for auto-submit)
+    // This allows auto-submit to work when time expires
 
     // Add question details to answers
     const submissionAnswers = answers.map((studentAnswer) => {
@@ -60,7 +58,7 @@ export const submitTest = async (req, res) => {
       return {
         questionId: studentAnswer.questionId,
         question: question.question,
-        studentAnswer: studentAnswer.answer,
+        studentAnswer: studentAnswer.answer || '', // ✅ Allow empty answers
         answerKey: question.answerKey,
         marks: question.marks,
         marksAwarded: 0,
@@ -77,7 +75,7 @@ export const submitTest = async (req, res) => {
       marksObtained: 0,
       percentage: 0,
       status: "pending",
-      isResultPublished: false, // ⭐ NEW: Result publication flag
+      isResultPublished: false,
     });
 
     console.log("✅ Test submitted (pending checking)");

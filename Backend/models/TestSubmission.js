@@ -12,7 +12,8 @@ const answerSchema = new mongoose.Schema({
   },
   studentAnswer: {
     type: String,
-    required: true,
+    default: "",      // allow empty answers
+    required: false,  // ❌ REQUIRED = TRUE BREAKS EMPTY ANSWERS
   },
   answerKey: {
     type: String,
