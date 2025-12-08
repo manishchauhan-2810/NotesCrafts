@@ -1,14 +1,48 @@
 // FrontendTeacher/src/components/ClassCard.jsx
-import React, { useState } from 'react';
-import { Share2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Share2, MoreVertical, Trash2 } from 'lucide-react';
 import ClassCodeModal from './ClassCodeModal';
 
-const ClassCard = ({ classData, onClick }) => {
+const ClassCard = ({ classData, onClick, onDelete }) => {
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleShareClick = (e) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setShowCodeModal(true);
+    setShowDropdown(false);
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setShowDropdown(false);
+    
+    if (window.confirm(`Are you sure you want to delete "${classData.name}"? This action cannot be undone.`)) {
+      onDelete(classData._id || classData.id);
+    }
+  };
+
+  const handleDropdownToggle = (e) => {
+    e.stopPropagation();
+    setShowDropdown(!showDropdown);
   };
 
   return (
@@ -23,14 +57,37 @@ const ClassCard = ({ classData, onClick }) => {
               {classData.name}
             </h3>
             
-            {/* Share Button Overlay */}
-            <button
-              onClick={handleShareClick}
-              className="absolute top-3 right-3 p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-all cursor-pointer"
-              title="Share class code"
-            >
-              <Share2 className="w-4 h-4 text-white" />
-            </button>
+            {/* ✅ NEW - Three Dots Menu */}
+            <div className="absolute top-3 right-3" ref={dropdownRef}>
+              <button
+                onClick={handleDropdownToggle}
+                className="p-2 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-sm transition-all cursor-pointer"
+                title="More options"
+              >
+                <MoreVertical className="w-4 h-4 text-white" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={handleShareClick}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share Class Code
+                  </button>
+                  
+                  <button
+                    onClick={handleDeleteClick}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Class
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="p-6">

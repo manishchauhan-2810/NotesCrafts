@@ -27,3 +27,9 @@ export const uploadNote = async (formData) => {
 export const getNoteFileUrl = (fileId) => {
   return `${BASE_URL}/file/${fileId}`;
 };
+
+// ✅ NEW - Delete note
+export const deleteNote = async (noteId) => {
+  const res = await axios.delete(`${BASE_URL}/${noteId}`);
+  return res.data;
+};

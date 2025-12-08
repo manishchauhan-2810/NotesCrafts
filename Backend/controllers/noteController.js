@@ -135,3 +135,51 @@ export const getNoteFile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/**
+ * ✅ NEW - Delete Note
+ * DELETE /api/notes/:noteId
+ * Deletes note from database and file from GridFS
+ */
+export const deleteNote = async (req, res) => {
+  try {
+    const { noteId } = req.params;
+
+    console.log("📥 Delete request for note:", noteId);
+
+    // Find the note
+    const note = await Note.findById(noteId);
+    
+    if (!note) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Note not found" 
+      });
+    }
+
+    // Delete file from GridFS
+    try {
+      await bucket.delete(new mongoose.Types.ObjectId(note.fileId));
+      console.log("✅ File deleted from GridFS:", note.fileId);
+    } catch (gridFsError) {
+      console.error("⚠️ GridFS delete error:", gridFsError);
+      // Continue even if GridFS delete fails
+    }
+
+    // Delete note from database
+    await Note.findByIdAndDelete(noteId);
+    console.log("✅ Note deleted from database:", noteId);
+
+    res.status(200).json({
+      success: true,
+      message: "Note deleted successfully"
+    });
+  } catch (error) {
+    console.error("❌ Delete Note Error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Server error while deleting note",
+      error: error.message 
+    });
+  }
+};

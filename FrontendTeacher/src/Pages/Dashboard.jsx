@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ClassCard from "../components/ClassCard";
 import NewClass from "../components/NewClass";
-import { getClassrooms, createClassroom } from "../api/classroomApi";
+import { getClassrooms, createClassroom, deleteClassroom } from "../api/classroomApi";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -12,7 +12,6 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Get teacher ID from localStorage
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const teacherId = user.id || user._id;
   const role = "teacher";
@@ -48,6 +47,21 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error creating classroom:", error);
       alert("Failed to create classroom");
+    }
+  };
+
+  // ✅ NEW - Handle class deletion
+  const handleDeleteClass = async (classId) => {
+    try {
+      await deleteClassroom(classId, teacherId);
+      
+      // Remove from state
+      setClasses((prev) => prev.filter(c => (c._id || c.id) !== classId));
+      
+      alert("Class deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting classroom:", error);
+      alert(error.response?.data?.error || "Failed to delete classroom");
     }
   };
 
@@ -110,11 +124,12 @@ const Dashboard = () => {
                   name: classItem.name,
                   subject: classItem.name,
                   studentCount: classItem.students?.length || 0,
-                  classCode: classItem.classCode, // ⭐ Pass classCode
-                  students: classItem.students, // ⭐ Pass students array
+                  classCode: classItem.classCode,
+                  students: classItem.students,
                   color: "bg-gradient-to-br from-purple-500 to-purple-700",
                 }}
                 onClick={() => handleClassClick(classItem)}
+                onDelete={handleDeleteClass} // ✅ NEW - Pass delete handler
               />
             ))}
           </div>

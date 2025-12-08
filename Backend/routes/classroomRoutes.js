@@ -4,7 +4,8 @@ import {
   createClassroom, 
   joinClassroom, 
   getClassrooms,
-  getClassroomById // ✅ NEW
+  getClassroomById,
+  deleteClassroom // ✅ NEW
 } from "../controllers/classroomController.js";
 
 const router = express.Router();
@@ -12,6 +13,7 @@ const router = express.Router();
 router.post("/create", createClassroom);
 router.post("/join", joinClassroom);
 router.get("/", getClassrooms);
-router.get("/:classId", getClassroomById); // ✅ NEW
+router.get("/:classId", getClassroomById);
+router.delete("/:classId", deleteClassroom); // ✅ NEW - Delete classroom
 
 export default router;

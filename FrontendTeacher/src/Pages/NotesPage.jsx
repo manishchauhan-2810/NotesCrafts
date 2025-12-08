@@ -13,6 +13,7 @@ import {
   getNotesByClassroom,
   uploadNote,
   getNoteFileUrl,
+  deleteNote,
 } from "../api/notesApi";
 
 const NotesPage = () => {
@@ -23,13 +24,13 @@ const NotesPage = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [previewNote, setPreviewNote] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const [uploadForm, setUploadForm] = useState({
     title: "",
     file: null,
   });
 
-  // Fetch notes for this classroom
   useEffect(() => {
     fetchNotes();
   }, [classId]);
@@ -89,7 +90,6 @@ const NotesPage = () => {
       setNotes([response.note, ...notes]);
       setUploadForm({ title: "", file: null });
 
-      // Reset file input
       document.getElementById("file-upload").value = "";
 
       alert("Note uploaded successfully!");
@@ -98,6 +98,27 @@ const NotesPage = () => {
       alert(error.response?.data?.message || "Failed to upload note");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (noteId, noteTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${noteTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setDeleting(noteId);
+
+      await deleteNote(noteId);
+
+      setNotes(notes.filter(note => note._id !== noteId));
+
+      alert("Note deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      alert(error.response?.data?.message || "Failed to delete note");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -278,6 +299,24 @@ const NotesPage = () => {
                         >
                           <Download className="w-4 h-4" />
                           Download
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(note._id, note.title)}
+                          disabled={deleting === note._id}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors ml-auto"
+                        >
+                          {deleting === note._id ? (
+                            <>
+                              <Loader className="w-4 h-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

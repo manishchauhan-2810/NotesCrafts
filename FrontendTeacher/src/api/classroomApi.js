@@ -38,13 +38,26 @@ export const getClassrooms = async (userId, role) => {
   }
 };
 
-// ✅ NEW: Get single classroom details with populated students
+// ✅ Get single classroom details with populated students
 export const getClassroomDetails = async (classId) => {
   try {
     const response = await axios.get(`http://localhost:5000/api/classroom/${classId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching classroom details:", error);
+    throw error;
+  }
+};
+
+// ✅ NEW - Delete classroom
+export const deleteClassroom = async (classId, teacherId) => {
+  try {
+    const response = await API.delete(`/${classId}`, {
+      data: { teacherId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting classroom:", error);
     throw error;
   }
 };
