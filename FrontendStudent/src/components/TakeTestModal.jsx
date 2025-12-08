@@ -293,7 +293,7 @@ export default function TakeTestModal({ testPaper, studentId, studentName, onClo
               <button
                 onClick={handleSubmitClick}
                 disabled={isSubmitting || showViolationAlert}
-                className="px-8 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2"
+                className="px-8 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -323,7 +323,7 @@ export default function TakeTestModal({ testPaper, studentId, studentName, onClo
 
       {/* CONFIRMATION MODAL */}
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-xl p-6 max-w-md w-full">
             <div className="flex items-start gap-4 mb-4">
               <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -350,7 +350,7 @@ export default function TakeTestModal({ testPaper, studentId, studentName, onClo
               <button
                 onClick={() => handleSubmitTest(false)}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg cursor-pointer"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Anyway'}
               </button>

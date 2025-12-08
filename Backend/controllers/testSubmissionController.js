@@ -42,8 +42,10 @@ export const submitTest = async (req, res) => {
       });
     }
 
-    // ✅ REMOVED: Time check - allow submission even after deadline (for auto-submit)
-    // This allows auto-submit to work when time expires
+    // Check test timing
+    if (testPaper.endTime && new Date() > new Date(testPaper.endTime)) {
+      return res.status(400).json({ error: "Test time has expired" });
+    }
 
     // Add question details to answers
     const submissionAnswers = answers.map((studentAnswer) => {
@@ -58,7 +60,7 @@ export const submitTest = async (req, res) => {
       return {
         questionId: studentAnswer.questionId,
         question: question.question,
-        studentAnswer: studentAnswer.answer || '', // ✅ Allow empty answers
+        studentAnswer: studentAnswer.answer,
         answerKey: question.answerKey,
         marks: question.marks,
         marksAwarded: 0,
@@ -99,7 +101,7 @@ export const submitTest = async (req, res) => {
 };
 
 /**
- * ⭐ NEW: Check test with AI - BATCH PROCESSING with rate limiting
+ * ⭐ OPTIMIZED: Check test with AI - BATCH SIZE 2 with SHORT feedback
  * POST /api/test-submission/check-with-ai/:testPaperId
  */
 export const checkTestWithAI = async (req, res) => {
@@ -135,88 +137,106 @@ export const checkTestWithAI = async (req, res) => {
     let checkedCount = 0;
     let failedCount = 0;
 
-    // ⭐ BATCH PROCESSING: Process in batches of 5 to avoid rate limits
-    const BATCH_SIZE = 5;
-    const DELAY_BETWEEN_BATCHES = 2000; // 2 seconds delay between batches
+    // ⭐ BATCH SIZE: 1 student per API call (Most Reliable)
+    const BATCH_SIZE = 1;
+    const DELAY_BETWEEN_BATCHES = 1500; // 1.5 seconds
 
+    const totalBatches = Math.ceil(submissions.length / BATCH_SIZE);
+
+    console.log(`\n📊 Processing Plan:`);
+    console.log(`   Total Students: ${submissions.length}`);
+    console.log(`   Batch Size: ${BATCH_SIZE} student per API call (safest)`);
+    console.log(`   Total API Calls: ${totalBatches}`);
+    console.log(`   Estimated Time: ~${Math.ceil((totalBatches * 1.5) / 60)} minutes\n`);
+
+    // Process in batches of 2
     for (let i = 0; i < submissions.length; i += BATCH_SIZE) {
       const batch = submissions.slice(i, i + BATCH_SIZE);
-      
-      console.log(`\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(submissions.length / BATCH_SIZE)}`);
-      console.log(`   Students: ${batch.map(s => s.studentName).join(', ')}`);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
 
-      // Process batch concurrently
-      const batchPromises = batch.map(async (submission) => {
-        try {
-          const studentAnswers = submission.answers.map((ans) => ({
-            questionId: ans.questionId,
-            studentAnswer: ans.studentAnswer,
-          }));
+      console.log(`\n🔄 API Call ${batchNumber}/${totalBatches}`);
+      console.log(`   Processing student ${i + 1} of ${submissions.length}`);
+      console.log(`   Student: ${batch[0].studentName}`);
 
-          // Gemini AI Check with retry logic
-          let aiResults;
-          let retries = 3;
-          
-          while (retries > 0) {
-            try {
-              aiResults = await checkAnswersWithAI(answerKeys, studentAnswers);
-              break; // Success, exit retry loop
-            } catch (error) {
-              retries--;
-              if (retries === 0) throw error;
-              
-              console.log(`   ⚠️ Retry ${3 - retries}/3 for ${submission.studentName}`);
-              await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second between retries
-            }
-          }
+      // Collect all answers from this batch for a SINGLE AI call
+      const batchStudentAnswers = batch.map(submission => ({
+        submissionId: submission._id.toString(),
+        studentName: submission.studentName,
+        answers: submission.answers.map(ans => ({
+          questionId: ans.questionId,
+          studentAnswer: ans.studentAnswer,
+        })),
+      }));
 
-          let totalMarksObtained = 0;
+      try {
+        // ⭐ SINGLE AI CALL FOR 1 STUDENT (100% reliable)
+        console.log(`   📤 Sending API call for ${batch[0].studentName}...`);
+        
+        const aiResults = await checkAnswersWithAI(answerKeys, batchStudentAnswers);
 
-          submission.answers = submission.answers.map((ans) => {
-            const aiResult = aiResults.find(
-              (r) => r.questionId === ans.questionId
+        console.log(`   ✅ Received result for ${batch[0].studentName}`);
+
+        // Update each submission in the batch
+        for (const submission of batch) {
+          try {
+            const submissionResult = aiResults.find(
+              r => r.submissionId === submission._id.toString()
             );
 
-            if (aiResult) {
-              totalMarksObtained += aiResult.marksAwarded;
-              return {
-                ...ans,
-                aiMarks: aiResult.marksAwarded,
-                marksAwarded: aiResult.marksAwarded,
-                aiFeedback: aiResult.feedback || aiResult.reason || "",
-                checkedBy: "ai",
-              };
+            if (!submissionResult) {
+              console.log(`   ⚠️ No result found for ${submission.studentName}`);
+              failedCount++;
+              continue;
             }
 
-            return ans;
-          });
+            let totalMarksObtained = 0;
 
-          submission.marksObtained = totalMarksObtained;
-          submission.percentage = parseFloat(
-            ((totalMarksObtained / submission.totalMarks) * 100).toFixed(2)
-          );
-          submission.status = "checked";
-          submission.checkedAt = new Date();
-          submission.isResultPublished = false; // ⭐ Not published yet
+            submission.answers = submission.answers.map((ans) => {
+              const aiResult = submissionResult.checkedAnswers.find(
+                (r) => r.questionId === ans.questionId
+              );
 
-          await submission.save();
-          checkedCount++;
+              if (aiResult) {
+                totalMarksObtained += aiResult.marksAwarded;
+                return {
+                  ...ans,
+                  aiMarks: aiResult.marksAwarded,
+                  marksAwarded: aiResult.marksAwarded,
+                  aiFeedback: aiResult.feedback || "",
+                  checkedBy: "ai",
+                };
+              }
+              return ans;
+            });
 
-          console.log(`   ✅ ${submission.studentName}: ${totalMarksObtained}/${submission.totalMarks}`);
-          
-          return { success: true, studentName: submission.studentName };
-        } catch (error) {
-          failedCount++;
-          console.error(`   ❌ Failed for ${submission.studentName}:`, error.message);
-          return { success: false, studentName: submission.studentName, error: error.message };
+            submission.marksObtained = totalMarksObtained;
+            submission.percentage = parseFloat(
+              ((totalMarksObtained / submission.totalMarks) * 100).toFixed(2)
+            );
+            submission.status = "checked";
+            submission.checkedAt = new Date();
+            submission.isResultPublished = false;
+
+            await submission.save();
+            checkedCount++;
+
+            console.log(`   ✅ ${submission.studentName}: ${totalMarksObtained}/${submission.totalMarks} (${submission.percentage}%)`);
+          } catch (error) {
+            console.error(`   ❌ Error processing ${submission.studentName}:`, error.message);
+            failedCount++;
+          }
         }
-      });
 
-      await Promise.all(batchPromises);
+      } catch (error) {
+        console.error(`   ❌ API call failed for batch ${batchNumber}:`, error.message);
+        failedCount += batch.length;
+        
+        console.log(`   ⏭️ Continuing to next batch...`);
+      }
 
       // Delay between batches (except for last batch)
       if (i + BATCH_SIZE < submissions.length) {
-        console.log(`   ⏳ Waiting ${DELAY_BETWEEN_BATCHES/1000}s before next batch...`);
+        console.log(`   ⏳ Waiting ${DELAY_BETWEEN_BATCHES/1000}s before next API call...`);
         await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
       }
     }
@@ -224,6 +244,7 @@ export const checkTestWithAI = async (req, res) => {
     console.log(`\n✅ AI checking completed:`);
     console.log(`   Successfully checked: ${checkedCount}/${submissions.length}`);
     console.log(`   Failed: ${failedCount}/${submissions.length}`);
+    console.log(`   Total API Calls Made: ${totalBatches}`);
 
     res.status(200).json({
       success: true,
@@ -231,6 +252,8 @@ export const checkTestWithAI = async (req, res) => {
       checkedCount,
       failedCount,
       totalSubmissions: submissions.length,
+      totalApiCalls: totalBatches,
+      batchSize: BATCH_SIZE,
     });
   } catch (error) {
     console.error("❌ AI checking error:", error);
@@ -242,7 +265,7 @@ export const checkTestWithAI = async (req, res) => {
 };
 
 /**
- * ⭐ NEW: Publish results to students (batch update)
+ * Publish results to students
  * POST /api/test-submission/publish-results/:testPaperId
  */
 export const publishResults = async (req, res) => {
@@ -284,7 +307,6 @@ export const getTestResult = async (req, res) => {
       return res.status(404).json({ error: "No submission found" });
     }
 
-    // ⭐ Check if result is published
     if (!submission.isResultPublished) {
       return res.status(403).json({
         error: "Results not published yet",
@@ -303,7 +325,7 @@ export const getTestResult = async (req, res) => {
 };
 
 /**
- * Get single submission by ID (for teacher route)
+ * Get single submission by ID
  * GET /api/test-submission/submission/:submissionId
  */
 export const getSubmissionById = async (req, res) => {
@@ -415,8 +437,6 @@ export const updateMarksManually = async (req, res) => {
     );
     submission.status = "checked";
     submission.checkedAt = new Date();
-    // ⭐ Don't auto-publish after manual update
-    // submission.isResultPublished stays as is
 
     await submission.save();
 
