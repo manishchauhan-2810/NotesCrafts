@@ -51,7 +51,7 @@ export default function Login() {
       // Call actual backend API based on role
       const endpoint =
         formData.role === "teacher"
-          ? "https://adhayan-backend.onrender.com/api/student/login"
+          ? "https://adhayan-backend.onrender.com/api/teacher/login"
           : "https://adhayan-backend.onrender.com/api/student/login";
 
       const response = await axios.post(endpoint, {
