@@ -27,7 +27,6 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
       return;
     }
 
-    // ✅ Pass name (used by backend) and UI extras
     onCreate({
       name: formData.name,
       subject: formData.subject,
@@ -46,10 +45,10 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 pt-20">
-      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden animate-slideDown">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Create New Class</h2>
+    <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 pt-8 sm:pt-20 overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden animate-slideDown my-auto">
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Create New Class</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -58,9 +57,9 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Left Column */}
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Class Name
@@ -72,7 +71,7 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="e.g., Math 101"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 required
               />
             </div>
@@ -88,15 +87,15 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
                   setFormData({ ...formData, subject: e.target.value })
                 }
                 placeholder="e.g., Mathematics"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                 Choose Color Theme
               </label>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {colors.map((color) => (
                   <button
                     key={color.value}
@@ -104,7 +103,7 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
                     onClick={() =>
                       setFormData({ ...formData, color: color.value })
                     }
-                    className={`h-14 rounded-xl ${color.value} transition-transform ${
+                    className={`h-12 sm:h-14 rounded-lg sm:rounded-xl ${color.value} transition-transform ${
                       formData.color === color.value
                         ? "ring-2 ring-purple-300 scale-105"
                         : "hover:scale-105"
@@ -116,40 +115,40 @@ const NewClass = ({ isOpen, onClose, onCreate }) => {
             </div>
           </div>
 
-          {/* Right Column - Preview */}
-          <div className="space-y-4">
+          {/* Right Column - Preview (Hidden on mobile) */}
+          <div className="hidden lg:block space-y-3 sm:space-y-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Preview
             </label>
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-gray-200">
               <div
-                className={`${formData.color} h-36 flex items-center justify-center p-4 rounded-t-2xl`}
+                className={`${formData.color} h-28 sm:h-36 flex items-center justify-center p-4 rounded-t-xl sm:rounded-t-2xl`}
               >
-                <h3 className="text-xl font-bold text-white text-center">
+                <h3 className="text-lg sm:text-xl font-bold text-white text-center">
                   {formData.name || "Class Name"}
                 </h3>
               </div>
-              <div className="p-5">
-                <p className="text-gray-700 font-semibold mb-2">
+              <div className="p-4 sm:p-5">
+                <p className="text-gray-700 font-semibold text-sm sm:text-base mb-2">
                   {formData.subject || "Subject"}
                 </p>
-                <p className="text-gray-500 text-sm">0 students</p>
+                <p className="text-gray-500 text-xs sm:text-sm">0 students</p>
               </div>
             </div>
           </div>
 
           {/* Bottom Buttons */}
-          <div className="col-span-2 flex gap-4 pt-4">
+          <div className="col-span-1 lg:col-span-2 flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+              className="flex-1 px-4 sm:px-6 py-2.5 text-sm sm:text-base border border-gray-300 text-gray-700 font-medium rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors cursor-pointer"
+              className="flex-1 px-4 sm:px-6 py-2.5 text-sm sm:text-base bg-purple-600 text-white font-medium rounded-lg sm:rounded-xl hover:bg-purple-700 transition-colors cursor-pointer"
             >
               Create Class
             </button>

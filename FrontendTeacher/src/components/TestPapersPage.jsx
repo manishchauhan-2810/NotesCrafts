@@ -1,7 +1,7 @@
 // FrontendTeacher/src/components/TestPapersPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Sparkles, Pencil, Trash2, CheckCircle, Eye, Loader, FileText } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Sparkles, Pencil, Trash2, CheckCircle, Eye, Loader, FileText, X } from 'lucide-react';
 import { 
   getTestPapersByClassroom, 
   deleteTestPaper,
@@ -12,7 +12,7 @@ import PublishTestModal from './PublishTestModal';
 import EditAnswerKeysModal from './EditAnswerKeysModal';
 
 const TestPapersPage = () => {
-  const { classId } = useParams();
+  const { classData } = useOutletContext();
   const navigate = useNavigate();
 
   const [drafts, setDrafts] = useState([]);
@@ -29,15 +29,16 @@ const TestPapersPage = () => {
   const [availableNotes, setAvailableNotes] = useState([]);
   const [selectedNotes, setSelectedNotes] = useState([]);
 
-  // Fetch test papers
   useEffect(() => {
-    fetchTestPapers();
-  }, [classId]);
+    if (classData?.id) {
+      fetchTestPapers();
+    }
+  }, [classData?.id]);
 
   const fetchTestPapers = async () => {
     try {
       setLoading(true);
-      const response = await getTestPapersByClassroom(classId);
+      const response = await getTestPapersByClassroom(classData.id);
       const testPapers = response.testPapers || [];
 
       setDrafts(testPapers.filter(t => t.status === 'draft'));
@@ -49,13 +50,12 @@ const TestPapersPage = () => {
     }
   };
 
-  // Open AI modal and fetch notes
   const handleOpenAIModal = async () => {
     setShowAIModal(true);
     setLoadingNotes(true);
 
     try {
-      const response = await getNotesByClassroom(classId);
+      const response = await getNotesByClassroom(classData.id);
       setAvailableNotes(response.notes || []);
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -65,7 +65,6 @@ const TestPapersPage = () => {
     }
   };
 
-  // Generate test paper with AI
   const handleGenerateWithAI = async () => {
     if (selectedNotes.length === 0) {
       alert('Please select at least one note');
@@ -75,7 +74,7 @@ const TestPapersPage = () => {
     setIsGenerating(true);
 
     try {
-      const response = await generateTestPaperWithAI(selectedNotes, classId);
+      const response = await generateTestPaperWithAI(selectedNotes, classData.id);
 
       setDrafts(prev => [response.testPaper, ...prev]);
 
@@ -126,7 +125,7 @@ const TestPapersPage = () => {
   };
 
   const handleViewResults = (testId) => {
-    navigate(`/class/${classId}/test-papers/results/${testId}`);
+    navigate(`/class/${classData.id}/test-papers/results/${testId}`);
   };
 
   const toggleNoteSelection = (noteId) => {
@@ -148,60 +147,112 @@ const TestPapersPage = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Test Papers</h2>
-        <button
-          onClick={handleOpenAIModal}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
-        >
-          <Sparkles className="w-5 h-5" />
-          Create with AI
-        </button>
+      {/* HEADER */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 border border-blue-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+              📄 Test Papers
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Create and manage test papers with AI-powered question generation
+            </p>
+          </div>
+
+          <button
+            onClick={handleOpenAIModal}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl cursor-pointer"
+          >
+            <Sparkles className="w-5 h-5" />
+            <span>Create with AI</span>
+          </button>
+        </div>
       </div>
 
-      {/* Drafts */}
+      {/* ------------------- DRAFT TEST PAPERS ------------------- */}
       <div>
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Drafts</h3>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-2 h-8 bg-yellow-500 rounded-full"></div>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Draft Test Papers</h3>
+          <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs sm:text-sm rounded-full font-semibold">
+            {drafts.length}
+          </span>
+        </div>
+
         <div className="space-y-4">
           {drafts.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <p className="text-gray-500">No drafts yet. Create your first test paper!</p>
+            <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 sm:p-12 text-center">
+              <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No drafts yet</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Create your first test paper with AI!
+              </p>
             </div>
           ) : (
             drafts.map(test => (
               <div
                 key={test._id}
-                className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all"
               >
-                <div className="flex items-center gap-4">
-                  <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
-                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">
-                    draft
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {test.questions?.length || 0} questions • {test.totalMarks} marks
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleEditAnswerKeys(test)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-                  >
-                    <Pencil className="w-4 h-4" /> Edit Answer Keys
-                  </button>
-                  <button
-                    onClick={() => handleDelete(test._id, 'draft')}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </button>
-                  <button
-                    onClick={() => handlePublish(test)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
-                  >
-                    <CheckCircle className="w-4 h-4" /> Publish
-                  </button>
+                <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 w-full">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 truncate">
+                        {test.title}
+                      </h4>
+
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-indigo-600">
+                            {test.questions?.length || 0}
+                          </span>{' '}
+                          questions
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-indigo-600">
+                            {test.totalMarks}
+                          </span>{' '}
+                          marks
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-semibold">
+                          Draft
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                    <button
+                      onClick={() => handleEditAnswerKeys(test)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                      title="Edit Answer Keys"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(test._id, 'draft')}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+
+                    <button
+                      onClick={() => handlePublish(test)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Publish</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -209,42 +260,78 @@ const TestPapersPage = () => {
         </div>
       </div>
 
-      {/* Published */}
+      {/* ------------------- PUBLISHED TEST PAPERS ------------------- */}
       <div>
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Published</h3>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-2 h-8 bg-green-500 rounded-full"></div>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Published Test Papers</h3>
+          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm rounded-full font-semibold">
+            {published.length}
+          </span>
+        </div>
+
         <div className="space-y-4">
           {published.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <p className="text-gray-500">No published test papers yet.</p>
+            <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 sm:p-12 text-center">
+              <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No published test papers yet</p>
             </div>
           ) : (
             published.map(test => (
               <div
                 key={test._id}
-                className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all"
               >
-                <div className="flex items-center gap-4">
-                  <h4 className="text-lg font-semibold text-gray-900">{test.title}</h4>
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-                    published
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {test.questions?.length || 0} questions • {test.totalMarks} marks
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleViewResults(test._id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
-                  >
-                    <Eye className="w-4 h-4" /> View Results
-                  </button>
-                  <button
-                    onClick={() => handleDelete(test._id, 'published')}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </button>
+                <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 w-full">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 truncate">
+                        {test.title}
+                      </h4>
+
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-indigo-600">
+                            {test.questions?.length || 0}
+                          </span>{' '}
+                          questions
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-indigo-600">
+                            {test.totalMarks}
+                          </span>{' '}
+                          marks
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
+                          Published
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                    <button
+                      onClick={() => handleViewResults(test._id)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View Results</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(test._id, 'published')}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -252,14 +339,20 @@ const TestPapersPage = () => {
         </div>
       </div>
 
-      {/* AI Generation Modal */}
+      {/* ------------------- AI GENERATION MODAL ------------------- */}
       {showAIModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">
-                Generate Test Paper with AI
-              </h3>
+            <div className="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Generate Test Paper with AI
+                </h3>
+                <p className="text-sm text-gray-600 mt-1 hidden sm:block">
+                  Select notes to generate test questions
+                </p>
+              </div>
+
               <button
                 onClick={() => {
                   setShowAIModal(false);
@@ -268,11 +361,11 @@ const TestPapersPage = () => {
                 className="text-gray-400 hover:text-gray-600"
                 disabled={isGenerating}
               >
-                ✕
+                <X className="w-6 h-6 cursor-pointer" />
               </button>
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto">
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
               <h4 className="font-semibold text-gray-900 mb-4">
                 Select Source Notes
               </h4>
@@ -295,9 +388,9 @@ const TestPapersPage = () => {
                   {availableNotes.map(note => (
                     <label
                       key={note._id}
-                      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg cursor-pointer transition-all ${
                         selectedNotes.includes(note._id)
-                          ? 'border-purple-600 bg-purple-50'
+                          ? 'border-blue-600 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
@@ -306,17 +399,16 @@ const TestPapersPage = () => {
                         checked={selectedNotes.includes(note._id)}
                         onChange={() => toggleNoteSelection(note._id)}
                         disabled={isGenerating}
-                        className="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-600"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-600"
                       />
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-purple-600" />
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{note.title}</p>
-                          <p className="text-sm text-gray-500">
-                            Uploaded by {note.uploadedBy} •{' '}
-                            {new Date(note.createdAt).toLocaleDateString()}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{note.title}</p>
+                          <p className="text-xs sm:text-sm text-gray-500 truncate">
+                            Uploaded by {note.uploadedBy} • {new Date(note.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -326,21 +418,21 @@ const TestPapersPage = () => {
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex gap-3">
+            <div className="p-4 sm:p-6 border-t border-gray-200 flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => {
                   setShowAIModal(false);
                   setSelectedNotes([]);
                 }}
                 disabled={isGenerating}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 cursor-pointer"
+                className="w-full sm:flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateWithAI}
                 disabled={selectedNotes.length === 0 || isGenerating}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="w-full sm:flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 {isGenerating ? (
                   <span className="flex items-center justify-center gap-2">

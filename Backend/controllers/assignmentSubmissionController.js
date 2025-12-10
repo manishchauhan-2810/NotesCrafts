@@ -102,7 +102,7 @@ export const submitAssignment = async (req, res) => {
 };
 
 /* ============================================================================
-   2. CHECK ASSIGNMENT WITH AI (BATCH PROCESSING)
+   2. CHECK ASSIGNMENT WITH AI (ONE BY ONE - BATCH SIZE = 1)
    POST /api/assignment-submission/check-with-ai/:assignmentId
 ============================================================================ */
 export const checkAssignmentWithAI_Batch = async (req, res) => {
@@ -125,6 +125,8 @@ export const checkAssignmentWithAI_Batch = async (req, res) => {
       return res.status(404).json({ error: "No pending submissions found" });
     }
 
+    console.log(`📊 Total submissions to check: ${submissions.length}`);
+
     const answerKeys = assignment.questions.map((q) => ({
       questionId: q._id.toString(),
       question: q.question,
@@ -136,25 +138,27 @@ export const checkAssignmentWithAI_Batch = async (req, res) => {
     let checkedCount = 0;
     let failedCount = 0;
 
-    const BATCH_SIZE = 5;
-    const DELAY = 2000;
+    // 🔹 BATCH SIZE = 1 (Process submissions one by one)
+    const BATCH_SIZE = 1;
+    const DELAY = 2000; // 2 seconds delay between submissions
 
     for (let i = 0; i < submissions.length; i += BATCH_SIZE) {
       const batch = submissions.slice(i, i + BATCH_SIZE);
 
       console.log(
-        `\n🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
-          submissions.length / BATCH_SIZE
-        )}`
+        `\n🔄 Processing submission ${i + 1}/${submissions.length}`
       );
 
-      const batchPromises = batch.map(async (submission) => {
+      for (const submission of batch) {
         try {
+          console.log(`👤 Checking submission for: ${submission.studentName}`);
+
           const studentAnswers = submission.answers.map((ans) => ({
             questionId: ans.questionId,
             studentAnswer: ans.studentAnswer,
           }));
 
+          // Call AI checking (which itself processes one by one)
           let aiResults;
           let retries = 3;
 
@@ -167,8 +171,9 @@ export const checkAssignmentWithAI_Batch = async (req, res) => {
               break;
             } catch (error) {
               retries--;
+              console.error(`⚠️ Retry ${3 - retries}/3 failed:`, error.message);
               if (retries === 0) throw error;
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+              await new Promise((resolve) => setTimeout(resolve, 2000)); // 2s retry delay
             }
           }
 
@@ -202,19 +207,24 @@ export const checkAssignmentWithAI_Batch = async (req, res) => {
           await submission.save();
           checkedCount++;
 
-          return { success: true };
+          console.log(`✅ Checked successfully - Marks: ${totalMarksObtained}/${submission.totalMarks}`);
+
         } catch (error) {
           failedCount++;
-          return { success: false, error: error.message };
+          console.error(`❌ Failed to check submission:`, error.message);
         }
-      });
+      }
 
-      await Promise.all(batchPromises);
-
+      // Delay between submissions
       if (i + BATCH_SIZE < submissions.length) {
+        console.log(`⏳ Waiting ${DELAY / 1000}s before next submission...`);
         await new Promise((resolve) => setTimeout(resolve, DELAY));
       }
     }
+
+    console.log("\n=== AI CHECKING COMPLETED ===");
+    console.log(`✅ Successfully checked: ${checkedCount}`);
+    console.log(`❌ Failed: ${failedCount}`);
 
     res.status(200).json({
       success: true,

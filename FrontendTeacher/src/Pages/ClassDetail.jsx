@@ -59,6 +59,7 @@ const ClassDetail = () => {
         if (classroom) {
           setClassData({
             ...classroom,
+            students: classroom.students || [], // ⭐ IMPORTANT: Include students array
             id: classroom._id,
             subject: classroom.name,
             studentCount: classroom.students?.length || 0,

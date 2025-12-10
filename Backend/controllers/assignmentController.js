@@ -6,7 +6,7 @@ import { generateAssignmentFromText } from "../config/geminiAssignment.js";
 import { extractTextFromPDF, cleanText, validateTextContent } from "../utils/pdfExtractor.js";
 
 /**
- * Generate assignment using AI
+ * Generate assignment using AI (5 questions × 2 marks = 10 marks)
  * POST /api/assignment/generate-ai
  */
 export const generateAssignmentWithAI = async (req, res) => {
@@ -77,15 +77,36 @@ export const generateAssignmentWithAI = async (req, res) => {
     }
 
     console.log("✅ Content validation passed");
+    console.log(`📊 Total extracted text: ${combinedText.length} characters`);
 
     // Clean text
     const cleanedText = cleanText(combinedText, 15000);
+    console.log(`📊 Cleaned text: ${cleanedText.length} characters`);
 
     // Generate assignment using Gemini
-    console.log("🤖 Calling Gemini API...");
-    const questions = await generateAssignmentFromText(cleanedText);
+    console.log("🤖 Calling Gemini API for assignment generation...");
+    console.log("📋 Generating 5 questions × 2 marks each = 10 total marks");
+    
+    let questions;
+    try {
+      questions = await generateAssignmentFromText(cleanedText);
+      console.log(`✅ Generated ${questions.length} questions`);
+    } catch (aiError) {
+      console.error("❌ AI Generation Error:", aiError.message);
+      return res.status(500).json({
+        error: "Failed to generate assignment using AI",
+        details: aiError.message,
+        suggestion: "Please try again or select different notes"
+      });
+    }
 
-    console.log(`✅ Generated ${questions.length} questions`);
+    // Validate questions
+    if (!questions || questions.length !== 5) {
+      return res.status(500).json({
+        error: "AI did not generate the expected number of questions",
+        details: `Expected 5 questions, got ${questions?.length || 0}`
+      });
+    }
 
     // Create title
     const noteNames = notes.slice(0, 2).map(n => n.title).join(", ");
@@ -93,11 +114,11 @@ export const generateAssignmentWithAI = async (req, res) => {
       ? `Assignment from ${noteNames} and ${notes.length - 2} more`
       : `Assignment from ${noteNames}`;
 
-    // Save to database
+    // Save to database (5 questions × 2 marks = 10 marks)
     const assignment = await Assignment.create({
       classroomId,
       title: assignmentTitle,
-      description: "Complete all questions with detailed explanations",
+      description: "Complete all 5 questions with brief answers (2 marks each)",
       generatedFrom: noteIds,
       questions: questions.map(q => ({
         question: q.question,
@@ -105,7 +126,7 @@ export const generateAssignmentWithAI = async (req, res) => {
         answerKey: q.answerKey,
         answerGuidelines: q.answerGuidelines || "",
       })),
-      totalMarks: 50,
+      totalMarks: 10, // ⬅️ 5 questions × 2 marks
       status: "draft",
     });
 
@@ -114,20 +135,24 @@ export const generateAssignmentWithAI = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: `Generated assignment with ${questions.length} questions`,
+      message: `Generated assignment with ${questions.length} questions (2 marks each)`,
       assignment,
       stats: {
         totalNotes: notes.length,
         processedNotes: successfulExtractions,
         questionsGenerated: questions.length,
-        totalMarks: 50,
+        marksPerQuestion: 2,
+        totalMarks: 10,
       }
     });
   } catch (error) {
     console.error("❌ ASSIGNMENT GENERATION FAILED:", error);
+    
+    // Detailed error response
     res.status(500).json({
       error: "Failed to generate assignment",
       details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

@@ -91,7 +91,7 @@ const StudentAssignmentResult = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Loader className="w-12 h-12 text-purple-600 animate-spin" />
       </div>
     );
@@ -99,12 +99,12 @@ const StudentAssignmentResult = () => {
 
   if (!submission || !assignment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-700">Submission not found</p>
+          <p className="text-gray-700 mb-4">Submission not found</p>
           <button
             onClick={() => navigate(`/class/${classId}/assignments/results/${assignmentId}`)}
-            className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
           >
             Back to Results
           </button>
@@ -115,101 +115,115 @@ const StudentAssignmentResult = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Back Button */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <button
             onClick={() => navigate(`/class/${classId}/assignments/results/${assignmentId}`)}
             className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4 cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
-            Back to All Results
+            <span className="text-sm sm:text-base">Back to All Results</span>
           </button>
         </div>
 
         {/* Student Summary */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+            {/* Student Info */}
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl sm:text-2xl flex-shrink-0">
                 {submission.studentName?.charAt(0).toUpperCase()}
               </div>
 
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">{submission.studentName}</h1>
-                <p className="text-sm text-gray-500">Submitted: {new Date(submission.submittedAt).toLocaleString()}</p>
-                <p className="text-sm text-gray-600 mt-1">{assignment.title}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1 truncate">
+                  {submission.studentName}
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 break-words">
+                  Submitted: {new Date(submission.submittedAt).toLocaleString()}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">{assignment.title}</p>
               </div>
             </div>
 
-            <div className="text-right">
+            {/* Score Section */}
+            <div className="w-full sm:w-auto text-left sm:text-right">
               <div className="flex items-center gap-2 mb-2">
-                <Award className="w-8 h-8 text-purple-600" />
-                <div className="text-3xl font-bold text-purple-600">
+                <Award className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600">
                   {submission.marksObtained}/{submission.totalMarks}
                 </div>
               </div>
 
               <p className="text-sm text-gray-500">{submission.percentage}%</p>
 
-              <span
-                className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                  submission.status === 'checked' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}
-              >
-                {submission.status === 'checked' ? 'Checked' : 'Pending'}
-              </span>
-
-              {submission.isResultPublished && (
-                <span className="inline-block mt-2 ml-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                  Published
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                    submission.status === 'checked' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
+                  {submission.status === 'checked' ? 'Checked' : 'Pending'}
                 </span>
-              )}
+
+                {submission.isResultPublished && (
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                    Published
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           {submission.status === 'checked' && submission.checkedAt && (
             <div className="pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">Checked on: {new Date(submission.checkedAt).toLocaleString()}</p>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Checked on: {new Date(submission.checkedAt).toLocaleString()}
+              </p>
             </div>
           )}
         </div>
 
         {/* QUESTIONS SECTION */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {submission.answers.map((answer, index) => {
             const question = assignment.questions.find((q) => q._id === answer.questionId);
             const isEditing = editingMarks[answer.questionId] !== undefined;
             if (!question) return null;
 
             return (
-              <div key={answer.questionId} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div key={answer.questionId} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                 {/* Question Title */}
                 <div className="mb-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">Question {index + 1}</h3>
-                    <span className="px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-700">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Question {index + 1}</h3>
+                    <span className="px-3 py-1 rounded-full text-xs sm:text-sm bg-indigo-100 text-indigo-700 self-start">
                       {question.marks} marks
                     </span>
                   </div>
-                  <p className="text-gray-700 whitespace-pre-wrap">{question.question}</p>
+                  <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap break-words">
+                    {question.question}
+                  </p>
                 </div>
 
                 {/* Student Answer */}
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Student's Answer:</h4>
+                <div className="mb-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">Student's Answer:</h4>
                   <textarea
                     value={answer.studentAnswer}
                     readOnly
-                    rows={8}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 resize-none"
+                    rows={6}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg text-sm sm:text-base text-gray-900 resize-none"
                   />
                 </div>
 
                 {/* Answer Key */}
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">Answer Key:</h4>
-                  <p className="text-blue-800 whitespace-pre-wrap">{question.answerKey}</p>
+                <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-xs sm:text-sm font-semibold text-blue-900 mb-2">Answer Key:</h4>
+                  <p className="text-xs sm:text-sm text-blue-800 whitespace-pre-wrap break-words leading-relaxed">
+                    {question.answerKey}
+                  </p>
 
                   {question.answerGuidelines && (
                     <p className="text-xs text-blue-600 mt-2">
@@ -220,27 +234,27 @@ const StudentAssignmentResult = () => {
 
                 {/* GRADING SECTION */}
                 <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center gap-6 flex-wrap">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 flex-wrap">
                     {/* AI Marks */}
                     {answer.aiMarks !== null && (
                       <>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">AI Suggestion</p>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1">AI Suggestion</p>
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-purple-600" />
-                            <span className="font-semibold text-purple-600">
+                            <span className="text-sm sm:text-base font-semibold text-purple-600">
                               {answer.aiMarks}/{question.marks}
                             </span>
                           </div>
                         </div>
 
-                        <div className="h-8 w-px bg-gray-300"></div>
+                        <div className="hidden sm:block h-8 w-px bg-gray-300"></div>
                       </>
                     )}
 
                     {/* Marks Awarded */}
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Marks Awarded</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Marks Awarded</p>
 
                       {isEditing ? (
                         <div className="flex items-center gap-2">
@@ -258,13 +272,14 @@ const StudentAssignmentResult = () => {
                                 )
                               })
                             }
-                            className="w-20 px-3 py-1 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-16 sm:w-20 px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-300 rounded outline-none focus:ring-2 focus:ring-purple-600"
                           />
 
                           <button
                             onClick={() => saveMarks(answer.questionId)}
                             disabled={isSaving}
                             className="p-1 text-green-600 hover:bg-green-50 rounded cursor-pointer disabled:opacity-50"
+                            title="Save"
                           >
                             <Save className="w-4 h-4" />
                           </button>
@@ -273,6 +288,7 @@ const StudentAssignmentResult = () => {
                             onClick={() => cancelEditingMarks(answer.questionId)}
                             disabled={isSaving}
                             className="p-1 text-red-600 hover:bg-red-50 rounded cursor-pointer disabled:opacity-50"
+                            title="Cancel"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -280,7 +296,7 @@ const StudentAssignmentResult = () => {
                       ) : (
                         <div className="flex items-center gap-2">
                           <span
-                            className={`font-bold ${
+                            className={`text-sm sm:text-base font-bold ${
                               answer.marksAwarded === question.marks
                                 ? 'text-green-600'
                                 : answer.marksAwarded > 0
@@ -294,6 +310,7 @@ const StudentAssignmentResult = () => {
                           <button
                             onClick={() => startEditingMarks(answer.questionId, answer.marksAwarded)}
                             className="p-1 text-gray-600 hover:bg-gray-100 rounded cursor-pointer"
+                            title="Edit marks"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -305,7 +322,7 @@ const StudentAssignmentResult = () => {
                   {/* AI Feedback */}
                   {answer.aiFeedback && (
                     <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                      <p className="text-sm text-purple-900">
+                      <p className="text-xs sm:text-sm text-purple-900 break-words">
                         <span className="font-semibold">✨ AI Feedback:</span> {answer.aiFeedback}
                       </p>
                     </div>
@@ -314,7 +331,7 @@ const StudentAssignmentResult = () => {
                   {/* Teacher Feedback */}
                   {answer.teacherFeedback && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-900">
+                      <p className="text-xs sm:text-sm text-blue-900 break-words">
                         <span className="font-semibold">👨‍🏫 Teacher Feedback:</span> {answer.teacherFeedback}
                       </p>
                     </div>
@@ -346,19 +363,19 @@ const StudentAssignmentResult = () => {
         </div>
 
         {/* Final Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Final Score</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Final Score</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
                 {submission.isResultPublished
                   ? 'Results published and visible to student'
                   : 'Results not published yet (student cannot see)'}
               </p>
             </div>
 
-            <div className="text-right">
-              <div className="text-3xl font-bold text-purple-600 mb-1">
+            <div className="text-left sm:text-right w-full sm:w-auto">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">
                 {submission.marksObtained}/{submission.totalMarks}
               </div>
               <p className="text-sm text-gray-500">{submission.percentage}%</p>

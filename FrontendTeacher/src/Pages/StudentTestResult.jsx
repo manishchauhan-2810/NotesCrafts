@@ -1,4 +1,3 @@
-// FrontendTeacher/src/Pages/StudentTestResult.jsx (NEW FILE)
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Edit2, Save, X, Loader, Sparkles, User, Award } from 'lucide-react';
@@ -115,7 +114,7 @@ const StudentTestResult = () => {
   if (!submission || !testPaper) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center px-4">
           <p className="text-gray-700">Submission not found</p>
           <button
             onClick={() => navigate(`/class/${classId}/test-papers/results/${testId}`)}
@@ -130,70 +129,86 @@ const StudentTestResult = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <button
             onClick={() => navigate(`/class/${classId}/test-papers/results/${testId}`)}
             className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4 cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
-            Back to All Results
+            <span className="text-sm sm:text-base">Back to All Results</span>
           </button>
         </div>
 
         {/* Student Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-2xl flex-shrink-0">
                 {submission.studentName?.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 truncate">
                   {submission.studentName}
                 </h1>
-                <p className="text-sm text-gray-500">
-                  Submitted: {new Date(submission.submittedAt).toLocaleString()}
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  Submitted: {new Date(submission.submittedAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">{testPaper.title}</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">{testPaper.title}</p>
               </div>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-8 h-8 text-purple-600" />
-                <div className="text-3xl font-bold text-purple-600">
-                  {submission.marksObtained}/{submission.totalMarks}
+            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+              <div className="text-left sm:text-right">
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600">
+                    {submission.marksObtained}/{submission.totalMarks}
+                  </div>
                 </div>
+                <p className="text-sm text-gray-500">{submission.percentage}%</p>
               </div>
-              <p className="text-sm text-gray-500">{submission.percentage}%</p>
-              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                submission.status === 'checked'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {submission.status === 'checked' ? 'Checked' : 'Pending'}
-              </span>
-              {submission.isResultPublished && (
-                <span className="inline-block mt-2 ml-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                  Published
+              <div className="flex flex-col gap-2">
+                <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                  submission.status === 'checked'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {submission.status === 'checked' ? 'Checked' : 'Pending'}
                 </span>
-              )}
+                {submission.isResultPublished && (
+                  <span className="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 whitespace-nowrap">
+                    Published
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           {submission.status === 'checked' && submission.checkedAt && (
             <div className="pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Checked on: {new Date(submission.checkedAt).toLocaleString()}
+              <p className="text-xs sm:text-sm text-gray-600">
+                Checked on: {new Date(submission.checkedAt).toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </p>
             </div>
           )}
         </div>
 
         {/* Questions */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {submission.answers.map((answer, index) => {
             const question = testPaper.questions.find(q => q._id === answer.questionId);
             const isEditing = editingMarks[answer.questionId] !== undefined;
@@ -201,15 +216,15 @@ const StudentTestResult = () => {
             if (!question) return null;
 
             return (
-              <div key={answer.questionId} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div key={answer.questionId} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                 
                 {/* Question Title */}
                 <div className="mb-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       Question {index + 1}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-sm ${
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap flex-shrink-0 ${
                       question.type === 'short'
                         ? 'bg-blue-100 text-blue-700'
                         : question.type === 'medium'
@@ -219,24 +234,24 @@ const StudentTestResult = () => {
                       {question.marks} marks
                     </span>
                   </div>
-                  <p className="text-gray-700">{question.question}</p>
+                  <p className="text-sm sm:text-base text-gray-700">{question.question}</p>
                 </div>
 
                 {/* Student Answer */}
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Student's Answer:</h4>
+                <div className="mb-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">Student's Answer:</h4>
                   <textarea
                     value={answer.studentAnswer}
                     readOnly
                     rows={getTextareaRows(question._id)}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 resize-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg text-sm sm:text-base text-gray-900 resize-none"
                   />
                 </div>
 
                 {/* Answer Key */}
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">Answer Key:</h4>
-                  <p className="text-blue-800 whitespace-pre-wrap">{question.answerKey}</p>
+                <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-xs sm:text-sm font-semibold text-blue-900 mb-2">Answer Key:</h4>
+                  <p className="text-sm sm:text-base text-blue-800 whitespace-pre-wrap">{question.answerKey}</p>
 
                   {question.answerGuidelines && (
                     <p className="text-xs text-blue-600 mt-2">
@@ -247,27 +262,27 @@ const StudentTestResult = () => {
 
                 {/* Grading */}
                 <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center gap-6 flex-wrap">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 flex-wrap">
                     
                     {/* AI Marks */}
                     {answer.aiMarks !== null && (
                       <>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">AI Suggestion</p>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1">AI Suggestion</p>
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-purple-600" />
-                            <span className="font-semibold text-purple-600">
+                            <span className="text-sm sm:text-base font-semibold text-purple-600">
                               {answer.aiMarks}/{question.marks}
                             </span>
                           </div>
                         </div>
-                        <div className="h-8 w-px bg-gray-300"></div>
+                        <div className="hidden sm:block h-8 w-px bg-gray-300"></div>
                       </>
                     )}
 
                     {/* Marks Awarded */}
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Marks Awarded</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Marks Awarded</p>
                       {isEditing ? (
                         <div className="flex items-center gap-2">
                           <input
@@ -284,7 +299,7 @@ const StudentTestResult = () => {
                                 )
                               })
                             }
-                            className="w-20 px-3 py-1 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-16 sm:w-20 px-2 sm:px-3 py-1 text-sm sm:text-base border border-gray-300 rounded outline-none focus:ring-2 focus:ring-purple-600"
                           />
                           <button
                             onClick={() => saveMarks(answer.questionId)}
@@ -303,7 +318,7 @@ const StudentTestResult = () => {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className={`font-bold ${
+                          <span className={`text-sm sm:text-base font-bold ${
                             answer.marksAwarded === question.marks
                               ? 'text-green-600'
                               : answer.marksAwarded > 0
@@ -326,7 +341,7 @@ const StudentTestResult = () => {
                   {/* AI Feedback */}
                   {answer.aiFeedback && (
                     <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                      <p className="text-sm text-purple-900">
+                      <p className="text-xs sm:text-sm text-purple-900">
                         <span className="font-semibold">AI Feedback:</span> {answer.aiFeedback}
                       </p>
                     </div>
@@ -335,7 +350,7 @@ const StudentTestResult = () => {
                   {/* Teacher Feedback */}
                   {answer.teacherFeedback && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-900">
+                      <p className="text-xs sm:text-sm text-blue-900">
                         <span className="font-semibold">Teacher Feedback:</span> {answer.teacherFeedback}
                       </p>
                     </div>
@@ -365,18 +380,18 @@ const StudentTestResult = () => {
         </div>
 
         {/* Final Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Final Score</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Final Score</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
                 {submission.isResultPublished 
                   ? 'Results published and visible to student' 
                   : 'Results not published yet (student cannot see)'}
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-purple-600 mb-1">
+            <div className="text-left sm:text-right w-full sm:w-auto">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">
                 {submission.marksObtained}/{submission.totalMarks}
               </div>
               <p className="text-sm text-gray-500">{submission.percentage}%</p>

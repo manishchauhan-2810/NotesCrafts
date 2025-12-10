@@ -1,12 +1,37 @@
 // Backend/config/gemini.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEN_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
+// ⭐ MULTIPLE API KEYS - Load Balancing
+const API_KEYS = [
+  process.env.GEN_API_KEY_1,
+  process.env.GEN_API_KEY_2,
+  process.env.GEN_API_KEY_3,
+].filter(Boolean); // Remove undefined keys
 
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-});
+let currentKeyIndex = 0;
+const MAX_RETRIES = API_KEYS.length;
+
+/**
+ * Get Gemini model using current API key
+ */
+const getModel = () => {
+  const apiKey = API_KEYS[currentKeyIndex];
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  console.log(`🔑 Using API Key #${currentKeyIndex + 1}/${API_KEYS.length}`);
+
+  return genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+  });
+};
+
+/**
+ * Rotate to next API key
+ */
+const rotateApiKey = () => {
+  currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+  console.log(`🔄 Switched to API Key #${currentKeyIndex + 1}/${API_KEYS.length}`);
+};
 
 const generationConfig = {
   temperature: 1,
@@ -17,18 +42,19 @@ const generationConfig = {
 };
 
 /**
- * Generate MCQ quiz from text using Gemini AI
- * @param {string} extractedText - Combined text from PDFs
- * @returns {Promise<Array>} - Array of 20 MCQ questions
+ * ⭐ Generate MCQ Quiz from PDF Text
  */
 export const generateQuizFromText = async (extractedText) => {
-  try {
-    console.log("🤖 Preparing Gemini prompt...");
-    
-    // Limit text to prevent token overflow
-    const limitedText = extractedText.slice(0, 10000);
-    
-    const prompt = `
+  let attempts = 0;
+
+  while (attempts < MAX_RETRIES) {
+    try {
+      console.log("🤖 Preparing Gemini prompt for MCQ Quiz...");
+
+      // Limit text to avoid token overflow
+      const limitedText = extractedText.slice(0, 10000);
+
+      const prompt = `
 You are an expert quiz generator. Generate exactly 20 multiple-choice questions from the following educational content.
 
 CONTENT:
@@ -66,66 +92,85 @@ IMPORTANT:
 - correctAnswer must EXACTLY match one of the options
 `;
 
-    console.log("📤 Sending request to Gemini...");
+      console.log("📤 Sending request to Gemini...");
 
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [],
-    });
+      const model = getModel();
 
-    const result = await chatSession.sendMessage(prompt);
-    const response = result.response.text();
-    
-    console.log("📥 Received response from Gemini");
-    console.log("Response preview:", response.slice(0, 200) + "...");
+      const chatSession = model.startChat({
+        generationConfig,
+        history: [],
+      });
 
-    // Clean response (remove markdown if present)
-    let cleanedResponse = response.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      const result = await chatSession.sendMessage(prompt);
+      const response = result.response.text();
+
+      console.log("📥 Received response from Gemini");
+
+      // Cleanup
+      let cleanedResponse = response.trim();
+      if (cleanedResponse.startsWith("```json")) {
+        cleanedResponse = cleanedResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      }
+      if (cleanedResponse.startsWith("```")) {
+        cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
+      }
+
+      // Parse JSON
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(cleanedResponse);
+      } catch (err) {
+        console.error("❌ JSON Parse Error:", err.message);
+        throw new Error("Invalid JSON response from AI");
+      }
+
+      if (!parsedResponse.questions || !Array.isArray(parsedResponse.questions)) {
+        throw new Error("Invalid response format (questions missing)");
+      }
+
+      // Validate
+      const validQuestions = parsedResponse.questions.filter(q => {
+        return (
+          q.question &&
+          Array.isArray(q.options) &&
+          q.options.length === 4 &&
+          q.correctAnswer &&
+          q.options.includes(q.correctAnswer)
+        );
+      });
+
+      if (validQuestions.length === 0) {
+        throw new Error("No valid MCQs generated");
+      }
+
+      console.log(`✅ Generated ${validQuestions.length} valid MCQs`);
+      return validQuestions;
+
+    } catch (error) {
+      console.error(`❌ Gemini API Error (Key #${currentKeyIndex + 1}):`, error.message);
+
+      attempts++;
+
+      // If quota exceeded → rotate
+      if (
+        error.message.includes("quota") ||
+        error.message.includes("429") ||
+        error.message.includes("RESOURCE_EXHAUSTED")
+      ) {
+        console.log(`⚠️ API Key #${currentKeyIndex + 1} quota exceeded. Rotating...`);
+        rotateApiKey();
+
+        if (attempts < MAX_RETRIES) {
+          console.log("🔄 Retrying with next API key...");
+          continue;
+        }
+      }
+
+      throw error;
     }
-    if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
-    }
-
-    // Parse JSON
-    let parsedResponse;
-    try {
-      parsedResponse = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error("❌ JSON Parse Error:", parseError.message);
-      console.error("Response was:", cleanedResponse);
-      throw new Error("Invalid JSON response from AI");
-    }
-
-    if (!parsedResponse.questions || !Array.isArray(parsedResponse.questions)) {
-      throw new Error("Invalid response format from AI");
-    }
-
-    if (parsedResponse.questions.length === 0) {
-      throw new Error("No questions generated by AI");
-    }
-
-    // Validate each question
-    const validQuestions = parsedResponse.questions.filter(q => {
-      return q.question && 
-             Array.isArray(q.options) && 
-             q.options.length === 4 &&
-             q.correctAnswer &&
-             q.options.includes(q.correctAnswer);
-    });
-
-    if (validQuestions.length === 0) {
-      throw new Error("No valid questions generated");
-    }
-
-    console.log(`✅ Generated ${validQuestions.length} valid questions`);
-
-    return validQuestions;
-  } catch (error) {
-    console.error("❌ Gemini API Error:", error.message);
-    throw error;
   }
+
+  throw new Error("All API keys exhausted. Try again later.");
 };
 
 export default { generateQuizFromText };

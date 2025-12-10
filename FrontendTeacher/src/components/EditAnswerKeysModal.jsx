@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Download, ChevronDown } from 'lucide-react';
 import { updateTestPaper } from '../api/testPaperApi';
+import { exportTestPaperToExcel, exportTestPaperToPDF } from '../utils/exportUtils';
 
 export default function EditAnswerKeysModal({ testPaper, onClose, onSave }) {
   const [questions, setQuestions] = useState(testPaper.questions);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(testPaper.title);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   const updateQuestion = (index, field, value) => {
     const updatedQuestions = [...questions];
@@ -35,6 +37,26 @@ export default function EditAnswerKeysModal({ testPaper, onClose, onSave }) {
     }
   };
 
+  const handleExportExcel = () => {
+    const result = exportTestPaperToExcel(testPaper);
+    if (result.success) {
+      alert(result.message);
+    } else {
+      alert(result.message);
+    }
+    setShowExportDropdown(false);
+  };
+
+  const handleExportPDF = () => {
+    const result = exportTestPaperToPDF(testPaper);
+    if (result.success) {
+      alert(result.message);
+    } else {
+      alert(result.message);
+    }
+    setShowExportDropdown(false);
+  };
+
   const getQuestionsByType = (type) => {
     return questions
       .map((q, index) => ({ ...q, originalIndex: index }))
@@ -56,13 +78,49 @@ export default function EditAnswerKeysModal({ testPaper, onClose, onSave }) {
               Review and edit answer keys before publishing
             </p>
           </div>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-6 h-6 cursor-pointer" />
-          </button>
+          
+          {/* Export Button Group */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Export</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {/* Dropdown Menu */}
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={handleExportExcel}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export as Excel
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6 cursor-pointer" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

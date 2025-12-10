@@ -1,4 +1,3 @@
-// FrontendTeacher/src/Pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -50,7 +49,6 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ NEW - Handle class deletion
   const handleDeleteClass = async (classId) => {
     try {
       await deleteClassroom(classId, teacherId);
@@ -76,18 +74,20 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onLogoClick={handleLogoClick} />
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">My Classes</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+              My Classes
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               Manage your classes and share codes with students
             </p>
           </div>
           {classes.length > 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 sm:py-2.5 bg-blue-600 text-white text-sm sm:text-base font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer whitespace-nowrap"
             >
               + Create New Class
             </button>
@@ -97,24 +97,24 @@ const Dashboard = () => {
         {loading ? (
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading classrooms...</p>
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-sm sm:text-base text-gray-500">Loading classrooms...</p>
             </div>
           </div>
         ) : classes.length === 0 ? (
-          <div className="text-center mt-20">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+          <div className="text-center mt-12 sm:mt-20 px-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">
               You haven't created any classrooms yet.
             </h2>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white text-sm sm:text-base font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer"
             >
               + Create Your First Class
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {classes.map((classItem) => (
               <ClassCard
                 key={classItem._id}
@@ -129,7 +129,7 @@ const Dashboard = () => {
                   color: "bg-gradient-to-br from-purple-500 to-purple-700",
                 }}
                 onClick={() => handleClassClick(classItem)}
-                onDelete={handleDeleteClass} // ✅ NEW - Pass delete handler
+                onDelete={handleDeleteClass}
               />
             ))}
           </div>

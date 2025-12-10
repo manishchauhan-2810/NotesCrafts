@@ -1,4 +1,3 @@
-// FrontendTeacher/src/Pages/TestResultsViewer.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -136,10 +135,10 @@ const TestResultsViewer = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <button
             onClick={() => navigate(`/class/${classId}/test-papers`)}
             className="flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4 cursor-pointer"
@@ -148,12 +147,12 @@ const TestResultsViewer = () => {
             Back to Test Papers
           </button>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{testPaper.title}</h1>
-          <p className="text-gray-600">{testPaper.totalMarks} marks • {submissions.length} submissions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{testPaper.title}</h1>
+          <p className="text-sm sm:text-base text-gray-600">{testPaper.totalMarks} marks • {submissions.length} submissions</p>
         </div>
 
-        {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {/* Action Cards - Hidden on small screens */}
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -196,12 +195,12 @@ const TestResultsViewer = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
           {pendingCount > 0 && (
             <button
               onClick={handleAIChecking}
               disabled={isAIChecking}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-purple-600 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isAIChecking ? (
                 <>
@@ -221,7 +220,7 @@ const TestResultsViewer = () => {
             <button
               onClick={handlePublishResults}
               disabled={isPublishing}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white text-sm sm:text-base font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isPublishing ? (
                 <>
@@ -239,7 +238,7 @@ const TestResultsViewer = () => {
 
           <button
             onClick={fetchData}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-gray-200 text-gray-700 text-sm sm:text-base font-semibold rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-5 h-5" />
             Refresh
@@ -248,9 +247,9 @@ const TestResultsViewer = () => {
 
         {/* Info Message */}
         {checkedCount > publishedCount && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 sm:mb-6">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-yellow-900 mb-1">
                   Results Not Published Yet
@@ -270,13 +269,13 @@ const TestResultsViewer = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Student</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Published</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Score</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Percentage</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Submitted</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Action</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-900">Student</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-900">Status</th>
+                  <th className="hidden sm:table-cell px-6 py-4 text-left text-sm font-semibold text-gray-900">Published</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-900">Score</th>
+                  <th className="hidden lg:table-cell px-6 py-4 text-left text-sm font-semibold text-gray-900">Percentage</th>
+                  <th className="hidden lg:table-cell px-6 py-4 text-left text-sm font-semibold text-gray-900">Submitted</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-900">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -290,31 +289,31 @@ const TestResultsViewer = () => {
                 ) : (
                   submissions.map((submission) => (
                     <tr key={submission._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-purple-600" />
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{submission.studentName}</p>
-                            <p className="text-sm text-gray-500">{submission.studentId?.email}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 text-xs sm:text-base truncate">{submission.studentName}</p>
+                            <p className="text-xs text-gray-500 truncate hidden sm:block">{submission.studentId?.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${
                           submission.status === 'checked'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
                           {submission.status === 'checked' ? (
-                            <><CheckCircle className="w-3 h-3" /> Checked</>
+                            <><CheckCircle className="w-3 h-3" /> <span className="hidden sm:inline">Checked</span></>
                           ) : (
-                            <><Clock className="w-3 h-3" /> Pending</>
+                            <><Clock className="w-3 h-3" /> <span className="hidden sm:inline">Pending</span></>
                           )}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden sm:table-cell px-6 py-4">
                         {submission.isResultPublished ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
                             <RefreshCw className="w-3 h-3" /> Published
@@ -323,16 +322,16 @@ const TestResultsViewer = () => {
                           <span className="text-sm text-gray-500">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
                         {submission.status === 'checked' ? (
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-gray-900 text-xs sm:text-base">
                             {submission.marksObtained}/{submission.totalMarks}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-500">-</span>
+                          <span className="text-xs sm:text-sm text-gray-500">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden lg:table-cell px-6 py-4">
                         {submission.status === 'checked' ? (
                           <span className={`font-semibold ${
                             submission.percentage >= 60 ? 'text-green-600' : 'text-red-600'
@@ -343,7 +342,7 @@ const TestResultsViewer = () => {
                           <span className="text-sm text-gray-500">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden lg:table-cell px-6 py-4">
                         <span className="text-sm text-gray-600">
                           {new Date(submission.submittedAt).toLocaleString('en-US', {
                             month: 'short',
@@ -353,12 +352,12 @@ const TestResultsViewer = () => {
                           })}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <button
                           onClick={() => handleViewStudent(submission)}
-                          className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+                          className="px-2 sm:px-4 py-2 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          View Details
+                          View
                         </button>
                       </td>
                     </tr>
