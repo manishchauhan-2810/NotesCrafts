@@ -30,7 +30,12 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173", 
+      "http://localhost:5174",
+      "https://adhayan-student.onrender.com",
+      "https://adhayan-teacher.onrender.com"
+    ],
     methods: ["GET", "POST"],
   },
 });
@@ -60,7 +65,16 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173", 
+    "http://localhost:5174",
+    "https://adhayan-student.onrender.com",
+    "https://adhayan-teacher.onrender.com"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
 app.use(express.json());
 
 // Routes
