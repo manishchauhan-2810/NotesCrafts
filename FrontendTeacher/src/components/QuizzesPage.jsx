@@ -42,7 +42,7 @@ const QuizzesPage = () => {
   const fetchQuizzes = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/quiz/classroom/${classId}`
+        `https://adhayan-backend.onrender.com/api/quiz/classroom/${classId}`
       );
       const quizzes = res.data.quizzes || [];
 
@@ -83,7 +83,7 @@ const QuizzesPage = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:5000/api/quiz/generate-ai",
+        "https://adhayan-backend.onrender.com/api/quiz/generate-ai",
         payload,
         {
           headers: {
@@ -126,7 +126,7 @@ const QuizzesPage = () => {
 
   const handleSaveQuiz = async (updatedQuiz) => {
     try {
-      await axios.put(`http://localhost:5000/api/quiz/${updatedQuiz._id}`, {
+      await axios.put(`https://adhayan-backend.onrender.com/api/quiz/${updatedQuiz._id}`, {
         title: updatedQuiz.title,
         questions: updatedQuiz.questions,
         status: updatedQuiz.status,
@@ -155,7 +155,7 @@ const QuizzesPage = () => {
     if (!confirm("Are you sure you want to delete this quiz?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/quiz/${id}`);
+      await axios.delete(`https://adhayan-backend.onrender.com/api/quiz/${id}`);
 
       if (status === "draft") {
         setDrafts(drafts.filter((q) => q._id !== id));

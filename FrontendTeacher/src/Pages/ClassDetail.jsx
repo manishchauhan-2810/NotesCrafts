@@ -43,7 +43,7 @@ const ClassDetail = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:5000/api/classroom`,
+          `https://adhayan-backend.onrender.com/api/classroom`,
           {
             params: {
               userId: currentUser.id || currentUser._id,

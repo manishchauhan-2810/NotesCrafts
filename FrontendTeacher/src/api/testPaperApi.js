@@ -1,7 +1,7 @@
 // FrontendTeacher/src/api/testPaperApi.js (UPDATED)
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://adhayan-backend.onrender.com/api";
 
 // Generate test paper with AI
 export const generateTestPaperWithAI = async (noteIds, classroomId) => {

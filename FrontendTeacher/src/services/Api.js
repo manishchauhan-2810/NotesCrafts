@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/quiz", // Replace with your backend URL
+  baseURL: "https://adhayan-backend.onrender.com/api/quiz", // Replace with your backend URL
 });
 
 // Quiz APIs

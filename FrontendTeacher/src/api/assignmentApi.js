@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://adhayan-backend.onrender.com/api";
 
 // Generate assignment with AI
 export const generateAssignmentWithAI = async (noteIds, classroomId) => {

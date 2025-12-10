@@ -37,7 +37,7 @@ const DoubtChat = ({ classId, user }) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`http://localhost:5000/api/doubts/${classId}`);
+      const res = await axios.get(`https://adhayan-backend.onrender.com/api/doubts/${classId}`);
       setDoubts(res.data || []);
     } catch (err) {
       console.error("Failed to fetch doubts:", err);
@@ -57,7 +57,7 @@ const DoubtChat = ({ classId, user }) => {
     if (!classId || !user) return;
 
     // Initialize socket connection
-    socketRef.current = io("http://localhost:5000", {
+    socketRef.current = io("https://adhayan-backend.onrender.com", {
       transports: ["websocket"],
       reconnection: true,
       reconnectionDelay: 1000,
@@ -168,7 +168,7 @@ const DoubtChat = ({ classId, user }) => {
 
       console.log("📤 Posting doubt:", payload);
 
-      const res = await axios.post("http://localhost:5000/api/doubts", payload);
+      const res = await axios.post("https://adhayan-backend.onrender.com/api/doubts", payload);
       
       setNewDoubtTitle("");
       setNewDoubtDescription("");
@@ -249,10 +249,10 @@ const DoubtChat = ({ classId, user }) => {
       };
 
       console.log("📤 Sending payload:", payload);
-      console.log("📤 To URL:", `http://localhost:5000/api/doubts/${selectedDoubt._id}/replies`);
+      console.log("📤 To URL:", `https://adhayan-backend.onrender.com/api/doubts${selectedDoubt._id}/replies`);
 
       const res = await axios.post(
-        `http://localhost:5000/api/doubts/${selectedDoubt._id}/replies`,
+        `https://adhayan-backend.onrender.com/api/doubts${selectedDoubt._id}/replies`,
         payload,
         {
           headers: {

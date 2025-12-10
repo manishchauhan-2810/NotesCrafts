@@ -27,15 +27,15 @@ const StudentTestResult = () => {
       
       let response;
       if (submissionId) {
-        response = await axios.get(`http://localhost:5000/api/test-submission/submission/${submissionId}`);
+        response = await axios.get(`https://adhayan-backend.onrender.com/api/test-submission/submission/${submissionId}`);
       } else {
         // Fallback: get all submissions and find by studentId
-        const allSubs = await axios.get(`http://localhost:5000/api/test-submission/test/${testId}`);
+        const allSubs = await axios.get(`https://adhayan-backend.onrender.com/api/test-submission/test/${testId}`);
         const found = allSubs.data.submissions.find(s => 
           (s.studentId._id || s.studentId) === studentId
         );
         if (found) {
-          response = await axios.get(`http://localhost:5000/api/test-submission/submission/${found._id}`);
+          response = await axios.get(`https://adhayan-backend.onrender.com/api/test-submission/submission/${found._id}`);
         }
       }
 
@@ -70,7 +70,7 @@ const StudentTestResult = () => {
           : { questionId: ans.questionId, marksAwarded: ans.marksAwarded, teacherFeedback: ans.teacherFeedback || '' }
       );
 
-      await axios.put(`http://localhost:5000/api/test-submission/update-marks/${submission._id}`, {
+      await axios.put(`https://adhayan-backend.onrender.com/api/test-submission/update-marks/${submission._id}`, {
         answers: updatedAnswers
       });
 

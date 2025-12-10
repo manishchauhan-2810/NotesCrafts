@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/classroom",
+  baseURL: "https://adhayan-backend.onrender.com/api/classroom",
 });
 
 // ✅ Create new classroom
@@ -41,7 +41,7 @@ export const getClassrooms = async (userId, role) => {
 // ✅ Get single classroom details with populated students
 export const getClassroomDetails = async (classId) => {
   try {
-    const response = await axios.get(`http://localhost:5000/api/classroom/${classId}`);
+    const response = await axios.get(`https://adhayan-backend.onrender.com/api/classroom/${classId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching classroom details:", error);

@@ -1,7 +1,7 @@
 // FrontendTeacher/src/api/notesApi.js
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000/api/notes";
+const BASE_URL = "https://adhayan-backend.onrender.com/api/notes";
 
 // Fetch all notes (admin)
 export const getAllNotes = async () => {

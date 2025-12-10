@@ -64,7 +64,7 @@ export default function PublishQuizModal({ quiz, onClose, onPublished }) {
       console.log('📤 Publishing quiz with timing:', payload);
 
       const response = await axios.put(
-        `http://localhost:5000/api/quiz/${quiz._id}/publish`,
+        `https://adhayan-backend.onrender.com/api/quiz/${quiz._id}/publish`,
         payload
       );
 
