@@ -24,7 +24,7 @@ const StudentNotesPage = () => {
       setError(null);
       
       const response = await axios.get(
-        `http://localhost:5000/api/notes/classroom/${classId}`
+        `https://adhayan-backend.onrender.com/api/notes/classroom/${classId}`
       );
       
       setNotes(response.data.notes || []);
@@ -45,7 +45,7 @@ const StudentNotesPage = () => {
   };
 
   const handleDownload = (note) => {
-    const url = `http://localhost:5000/api/notes/file/${note.fileId}`;
+    const url = `https://adhayan-backend.onrender.com/api/notes/file/${note.fileId}`;
     window.open(url, '_blank');
   };
 
@@ -166,7 +166,7 @@ const StudentNotesPage = () => {
             </div>
             <div className="flex-1 overflow-hidden">
               <iframe
-                src={`http://localhost:5000/api/notes/file/${previewNote.fileId}`}
+                src={`https://adhayan-backend.onrender.com/api/notes/file/${previewNote.fileId}`}
                 className="w-full h-full"
                 title="PDF Preview"
               />

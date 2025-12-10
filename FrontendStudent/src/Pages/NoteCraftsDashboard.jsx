@@ -28,7 +28,7 @@ export default function NoteCraftsDashboard() {
 
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/api/classroom", {
+        const response = await axios.get("https://adhayan-backend.onrender.com/api/classroom", {
           params: { userId: studentId, role: "student" },
         });
 
@@ -87,7 +87,7 @@ export default function NoteCraftsDashboard() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/classroom/join",
+        "https://adhayan-backend.onrender.com/api/classroom/join",
         {
           studentId: studentId,
           classCode: classCode.trim().toUpperCase(),

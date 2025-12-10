@@ -31,8 +31,8 @@ export default function Signup() {
     try {
       const endpoint =
         formData.role === 'teacher'
-          ? 'http://localhost:5000/api/teacher/register'
-          : 'http://localhost:5000/api/student/register'
+          ? 'https://adhayan-backend.onrender.com/api/teacher/register'
+          : 'https://adhayan-backend.onrender.com/api/student/register'
 
       await axios.post(endpoint, {
         name: formData.fullName,

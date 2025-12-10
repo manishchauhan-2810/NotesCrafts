@@ -1,7 +1,7 @@
 // FrontendStudent/src/api/quizApi.js
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://adhayan-backend.onrender.com/api";
 
 // Get active quizzes for classroom
 export const getActiveQuizzes = async (classroomId) => {
