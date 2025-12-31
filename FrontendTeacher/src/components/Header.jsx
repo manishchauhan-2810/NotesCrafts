@@ -54,7 +54,7 @@ const Header = ({ onLogoClick }) => {
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">ADHYAYAN.AI</h1>
+            <h1 className="text-xl font-bold text-gray-900">ADHYAN.AI</h1>
             <p className="text-sm text-gray-500">Teacher Panel</p>
           </div>
         </div>

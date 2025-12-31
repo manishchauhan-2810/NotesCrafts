@@ -86,7 +86,7 @@ export default function StudentNavbar() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900">ADHYAYAN.AI</span>
+            <span className="text-xl font-bold text-gray-900">ADHYAN.AI</span>
           </Link>
 
           <div className="flex-1 max-w-2xl mx-8">

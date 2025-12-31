@@ -108,7 +108,7 @@ export default function Login() {
                 </svg>
               </div>
               <h1 className="text-4xl font-bold text-gray-900">
-                NoteCrafts.ai
+                ADHYAN.AI
               </h1>
             </div>
 
@@ -183,7 +183,7 @@ export default function Login() {
                   </svg>
                 </div>
                 <span className="text-2xl font-bold text-gray-900">
-                  NoteCrafts.ai
+                  ADHYAN.AI
                 </span>
               </div>
             </div>
